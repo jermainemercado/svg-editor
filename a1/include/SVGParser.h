@@ -128,7 +128,7 @@ typedef struct {
         A valid SVGimage has been created and its address was returned
 		or 
 		An error occurred, and NULL was returned
- *@return the pinter to the new struct or NULL
+ *@return the pointer to the new struct or NULL
  *@param fileName - a string containing the name of the SVG file
 **/
 SVGimage* createSVGimage(char* fileName);
@@ -142,14 +142,14 @@ SVGimage* createSVGimage(char* fileName);
 char* SVGimageToString(SVGimage* img);
 
 /** Function to delete image content and free all the memory.
- *@pre SVGimgage  exists, is not null, and has not been freed
+ *@pre SVGimgage exists, is not null, and has not been freed
  *@post SVSVGimgageG  had been freed
  *@return none
  *@param obj - a pointer to an SVG struct
 **/
 void deleteSVGimage(SVGimage* img);
 
-/* For the four "get..." functions below, make sure you return a list of opinters to the existing structs 
+/* For the four "get..." functions below, make sure you return a list of pointers to the existing structs 
  - do not allocate new structs.  They all share the same format, and only differ in the contents of the lists 
  they return.
  
