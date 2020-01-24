@@ -7,7 +7,7 @@ VALGRIND_FLAGS = --leak-check=full --show-leak-kinds=all --track-origins=yes --l
 SVG_FILE = 
 
 # Standard common makefile
-parser: $(BIN)libsvgparse.so
+parser: $(BIN)libsvgparse.so test_harness
 
 $(BIN)libsvgparse.so: $(BIN)SVGParser.o $(BIN)LinkedListAPI.o
 	gcc -shared -o $(BIN)libsvgparse.so $(BIN)SVGParser.o $(BIN)LinkedListAPI.o -lxml2 -lm
@@ -31,4 +31,4 @@ xmlExample:
 	$(CC) $(CFLAGS) -I$(INC) -lxml2 -I$(XML_PATH) $(XMLFLAGS) $(SRC)libXmlExample.c -o $(BIN)xmlExample.o
 
 clean:
-	rm $(BIN)*.o $(BIN)*.so
+	rm -rf $(BIN)*.so $(BIN)*.o $(BIN)*.txt
