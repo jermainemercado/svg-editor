@@ -2,10 +2,12 @@
 #include "ParserHelper.h"
 
 SVGimage* createSVGimage(char* fileName) {
-
+    
+    //Initial set up for SVGimage.
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
     SVGimage *newImage = malloc(sizeof (SVGimage));
+    newImage->otherAttributes = NULL;
     newImage->title[0] = '\0';
     newImage->namespace[0] = '\0';
     newImage->description[0] = '\0';
@@ -25,6 +27,7 @@ SVGimage* createSVGimage(char* fileName) {
 
     //Populate title, and description if there is any associated to the XML file.
     parseTree(root_element, newImage);
+    printf("\nAttribute Test:%s\n", newImage->otherAttributes->)
     
     xmlFreeDoc(doc);
     xmlCleanupParser();
@@ -33,39 +36,74 @@ SVGimage* createSVGimage(char* fileName) {
 
 void deleteSVGimage(SVGimage* img) {
 
+    freeList(img->otherAttributes);
+    //free(img->otherAttributes);
     free(img);
 }
 
 char* SVGimageToString(SVGimage* img) {
 
-    char *backupBuffer = NULL;
     char *returnedBuffer = NULL;
     int bytesNeeded = 0;
 
+    //Populating SVGimage* namespace.
     bytesNeeded = snprintf(NULL,0,"\nNamespace:\n\t%s\n",img->namespace);
     returnedBuffer = malloc(bytesNeeded + 1);
     sprintf(returnedBuffer, "\nNamespace:\n\t%s\n", img->namespace);
     
     if (img->title[0] != '\0') {
-        /*bytesNeeded += snprintf(NULL,0,"\nTitle:\n\t%s\n", img->title);
-        backupBuffer = malloc(bytesNeeded+1);
-        strcpy(backupBuffer, returnedBuffer);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nTitle:\n\t%s\n", img->title);
-        strcat(returnedBuffer,backupBuffer);*/
         returnedBuffer = (char *)svgCat(returnedBuffer,"Title",img->title);
     }
     if (img->description[0] != '\0') {
-        /*bytesNeeded += snprintf(NULL,0,"\nDescription:\n\t%s\n", img->description);
-        backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
-        strcpy(backupBuffer, returnedBuffer);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nDescription:\n\t%s\n", img->description);
-        strcat(returnedBuffer, backupBuffer); */
         returnedBuffer = (char *)svgCat(returnedBuffer,"Description",img->description);
     }
-    if (backupBuffer != NULL){
-        free(backupBuffer);
-    }
+    for ()
     return returnedBuffer;
+}
+
+void deleteAttribute( void* data) {
+
+    Attribute* tempAttribute;
+
+    if (data == NULL) {
+        return;
+    }
+    
+    tempAttribute = (Attribute*) data;
+    free(tempAttribute->name);
+    free(tempAttribute->value);
+    free(tempAttribute);
+
+}
+
+char* attributeToString( void* data) {
+
+    int bytesNeeded = 0;
+    char* buffer = NULL;
+    Attribute* tempAttribute;
+
+    if (data == NULL) {
+        return;
+    }
+
+    tempAttribute = (Attribute *)data;
+    bytesNeeded = snprintf(NULL,0,"\nAttribute Name:\n\t%s\nAttribute Content:\n\t%s\n", tempAttribute->name, tempAttribute->value);
+
+    buffer = malloc(bytesNeeded+1);
+    sprintf(buffer,"\nAttribute Name:\n\t%s\nAttribute Content:\n\t%s\n", tempAttribute->name, tempAttribute->value);
+    return buffer;
+
+}
+
+int compareAttributes(const void *first, const void *second) {
+
+    Attribute* firstAttr = NULL;
+    Attribute* secondAttr = NULL;
+
+    if (first == NULL || second == NULL) {
+        return;
+    }
+
+    return strcmp(firstAttr->value,secondAttr->value);
+
 }

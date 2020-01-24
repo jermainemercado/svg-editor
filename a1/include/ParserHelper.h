@@ -7,16 +7,18 @@
 #include <stdio.h>
 
 
+
+
+
+static void parseTree(xmlNode* xml_node, SVGimage* current_img);
+static void parseAttributes(xmlNode* xml_node, SVGimage* current_img);
+void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend);
+static void attrInserter(xmlNode* xml_node, SVGimage* current_img);
+
 /*
 * Implementation of XML parser is supplemented with code from example authored by Dodji Seketeli.
 * Example code can be found at https://www.xmlsoft.org/examples/tree1.c
 */
-
-static void parseTree(xmlNode* xml_node, SVGimage* current_img);
-void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend);
-//static void parseTreeTitle(xmlNode* xml_node, SVGimage* current_img);
-//static void parseTreeDesc(xmlNode* xml_node, SVGimage* current_img);
-
 static void parseTree(xmlNode* xml_node, SVGimage* current_img)
 {
     xmlNode *cur_node = NULL;
@@ -28,67 +30,51 @@ static void parseTree(xmlNode* xml_node, SVGimage* current_img)
                 if (cur_node->children->content != NULL) {
                     if (!(strcmp((char *)cur_node->name,"title"))) {
                         strcpy(current_img->title, (char*)cur_node->children->content);
-                    }
-                    if (!(strcmp((char *)cur_node->name,"desc"))) {
+                    } else if (!(strcmp((char *)cur_node->name,"desc"))) {
                         strcpy(current_img->description, (char*)cur_node->children->content);
                     }
                 }
-                if (cur_node->content != NULL) {
-                    printf("\nNode Name:\n\t%s\nNode Content:\n\t%s\n", cur_node->name, cur_node->content);
-                }
-                parseTree(cur_node->children, current_img);
-
             }
-            
+            parseAttributes(cur_node,current_img);
+            parseTree(cur_node->children, current_img);
         }
     }
         
 }
 
-static void parseTreeTitle(xmlNode* xml_node, SVGimage* current_img) {
-    
-    xmlNode *cur_node = NULL;
-    char *buffer = NULL;
-    int bytesNeeded;
-
+/*
+* parseAttributes parses the current xml_node and adds every attribute that is a child of that node
+* to its associated List* in the SVGimage*
+* Implementation of XML parser is supplemented with code from example authored by Dodji Seketeli.
+* Example code can be found at https://www.xmlsoft.org/examples/tree1.c
+*/
+static void parseAttributes(xmlNode* xml_node, SVGimage* current_img) {
+    xmlAttr* attr;
+    xmlNode* cur_node;
     cur_node = xml_node;
-    if ((strcmp((char*)cur_node->name,"title"))) {
-        if (cur_node->children != NULL) {
-                if (cur_node->children->content != NULL) {
-                printf("Content:\n\t%s", (char *)cur_node->children->content);
-                bytesNeeded = snprintf(NULL, 0, (char *)cur_node->children->content);
-                buffer = malloc(bytesNeeded+1);
-                sprintf(buffer, (char *)cur_node->children->content);
-                strcpy(current_img->title,buffer);
-                free(buffer);
-                }
+    Attribute* cur_attr;
+        for (attr = cur_node->properties; attr != NULL; attr = attr->next)
+        {
+            xmlNode *value = attr->children;
+            char *attrName = (char *)attr->name;
+            char *cont = (char *)(value->content);
+            
+            if(!(strcmp((char *)attr->parent->name,"svg"))) {
+                cur_attr = malloc(sizeof(Attribute));
+                cur_attr->name = NULL;
+                cur_attr->value = NULL;
+                cur_attr->name = malloc(strlen(attrName) + 1);
+                cur_attr->value = malloc(strlen(cont) + 1);
+                strcpy(cur_attr->name, attrName);
+                strcpy(cur_attr->value,cont);
+                insertBack(current_img->otherAttributes,cur_attr);
+                printf("\nInserted Attr: %s\n",attrName);
+                free(cur_attr->name);
+                free(cur_attr->value);
+                free(cur_attr);
+            }
         }
-    }
 }
-
-
-
-/*static void parseTreeDesc(xmlNode* xml_node, SVGimage* current_img) {
-
-    xmlNode *cur_node = NULL;
-    char *buffer = NULL;
-    int bytesNeeded;
-
-    cur_node = xml_node;
-    if ((strcmp((char*)cur_node->name,"desc"))) {
-        if (cur_node->children != NULL) {
-                if (cur_node->children->content != NULL) {
-                printf("Content:\n\t%s", (char *)cur_node->children->content);
-                bytesNeeded = snprintf(NULL, 0, (char *)cur_node->children->content);
-                buffer = malloc(bytesNeeded+1);
-                sprintf(buffer, (char *)cur_node->children->content);
-                strcpy(current_img->title,buffer);
-                free(buffer);
-                }
-        }
-    }
-
-}*/
 
 /* Safely appends formatted strings to pointer passed to function. */
 void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend) {
