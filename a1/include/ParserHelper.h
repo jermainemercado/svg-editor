@@ -11,9 +11,8 @@
 
 
 static void parseTree(xmlNode* xml_node, SVGimage* current_img);
-static void parseAttributes(xmlNode* xml_node, SVGimage* current_img);
+static void parseAttributes(xmlNode* xml_node, SVGimage* current_img, char* element_title);
 void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend);
-static void attrInserter(xmlNode* xml_node, SVGimage* current_img);
 
 /*
 * Implementation of XML parser is supplemented with code from example authored by Dodji Seketeli.
@@ -35,7 +34,10 @@ static void parseTree(xmlNode* xml_node, SVGimage* current_img)
                     }
                 }
             }
-            parseAttributes(cur_node,current_img);
+            parseAttributes(cur_node,current_img,"svg");
+            parseAttributes(cur_node,current_img,"rect");
+            parseAttributes(cur_node,current_img,"circle");
+            parseAttributes(cur_node,current_img,"path");
             parseTree(cur_node->children, current_img);
         }
     }
@@ -48,18 +50,19 @@ static void parseTree(xmlNode* xml_node, SVGimage* current_img)
 * Implementation of XML parser is supplemented with code from example authored by Dodji Seketeli.
 * Example code can be found at https://www.xmlsoft.org/examples/tree1.c
 */
-static void parseAttributes(xmlNode* xml_node, SVGimage* current_img) {
+static void parseAttributes(xmlNode* xml_node, SVGimage* current_img, char* element_title) {
     xmlAttr* attr;
     xmlNode* cur_node;
     cur_node = xml_node;
     Attribute* cur_attr;
-        for (attr = cur_node->properties; attr != NULL; attr = attr->next)
-        {
+
+        for (attr = cur_node->properties; attr != NULL; attr = attr->next) {
             xmlNode *value = attr->children;
             char *attrName = (char *)attr->name;
             char *cont = (char *)(value->content);
             
-            if(!(strcmp((char *)attr->parent->name,"svg"))) {
+            if(!(strcmp((char *)attr->parent->name,element_title))) {
+
                 cur_attr = malloc(sizeof(Attribute));
                 cur_attr->name = NULL;
                 cur_attr->value = NULL;
@@ -67,14 +70,29 @@ static void parseAttributes(xmlNode* xml_node, SVGimage* current_img) {
                 cur_attr->value = malloc(strlen(cont) + 1);
                 strcpy(cur_attr->name, attrName);
                 strcpy(cur_attr->value,cont);
-                insertBack(current_img->otherAttributes,cur_attr);
-                printf("\nInserted Attr: %s\n",attrName);
+
+                if (!(strcmp(element_title,"svg"))) {
+                    insertBack(current_img->otherAttributes,cur_attr);
+                    printf("\nInsterted Attr Name:\n\t%s\nInserted Attr Content:\n\t%s", attrName, cont);
+                } else if(!(strcmp(element_title,"rect"))) {
+                    insertBack(current_img->rectangles,cur_attr);
+                    printf("\nInsterted Attr Name:\n\t%s\nInserted Attr Content:\n\t%s", attrName, cont);
+                } else if(!(strcmp(element_title,"circle"))) {
+                    insertBack(current_img->circles,cur_attr);
+                    printf("\nInsterted Attr Name:\n\t%s\nInserted Attr Content:\n\t%s", attrName, cont);
+                } else if(!(strcmp(element_title,"path"))) {
+                    insertBack(current_img->paths,cur_attr);
+                    printf("\nInsterted Attr Name:\n\t%s\nInserted Attr Content:\n\t%s", attrName, cont);
+                }
+
                 free(cur_attr->name);
                 free(cur_attr->value);
                 free(cur_attr);
             }
         }
 }
+
+
 
 /* Safely appends formatted strings to pointer passed to function. */
 void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend) {
@@ -94,4 +112,6 @@ void* svgCat(char* stringToModify, char* nameOfElement, char* stringToAppend) {
     }
     return stringToModify;
 }
+
+
 #endif

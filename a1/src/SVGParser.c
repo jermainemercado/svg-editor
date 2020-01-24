@@ -7,7 +7,10 @@ SVGimage* createSVGimage(char* fileName) {
     xmlDoc *doc = NULL;
     xmlNode *root_element = NULL;
     SVGimage *newImage = malloc(sizeof (SVGimage));
-    newImage->otherAttributes = NULL;
+    newImage->otherAttributes = initializeList(&attributeToString, &deleteAttribute,&compareAttributes);
+    newImage->rectangles = initializeList(&rectangleToString, &deleteRectangle,&compareRectangles);
+    newImage->circles = initializeList(&circleToString, &deleteCircle,&compareCircles);
+    newImage->paths = initializeList(&pathToString, &deletePath, &comparePaths);
     newImage->title[0] = '\0';
     newImage->namespace[0] = '\0';
     newImage->description[0] = '\0';
@@ -23,11 +26,10 @@ SVGimage* createSVGimage(char* fileName) {
 
     //Populate namespace.
     strcpy(newImage->namespace,(char *)root_element->ns->href);
-    printf("\nNamespace:\n\t%s\n",newImage->namespace);
-
+    
     //Populate title, and description if there is any associated to the XML file.
     parseTree(root_element, newImage);
-    printf("\nAttribute Test:%s\n", newImage->otherAttributes->)
+    //printf("\nAttribute Test:%s\n", newImage->otherAttributes->);
     
     xmlFreeDoc(doc);
     xmlCleanupParser();
@@ -36,6 +38,9 @@ SVGimage* createSVGimage(char* fileName) {
 
 void deleteSVGimage(SVGimage* img) {
 
+    freeList(img->paths);
+    freeList(img->circles);
+    freeList(img->rectangles);
     freeList(img->otherAttributes);
     //free(img->otherAttributes);
     free(img);
@@ -47,9 +52,9 @@ char* SVGimageToString(SVGimage* img) {
     int bytesNeeded = 0;
 
     //Populating SVGimage* namespace.
-    bytesNeeded = snprintf(NULL,0,"\nNamespace:\n\t%s\n",img->namespace);
+    bytesNeeded = snprintf(NULL,0,"\n\nNamespace:\n\t%s\n",img->namespace);
     returnedBuffer = malloc(bytesNeeded + 1);
-    sprintf(returnedBuffer, "\nNamespace:\n\t%s\n", img->namespace);
+    sprintf(returnedBuffer, "\n\nNamespace:\n\t%s\n", img->namespace);
     
     if (img->title[0] != '\0') {
         returnedBuffer = (char *)svgCat(returnedBuffer,"Title",img->title);
@@ -57,7 +62,6 @@ char* SVGimageToString(SVGimage* img) {
     if (img->description[0] != '\0') {
         returnedBuffer = (char *)svgCat(returnedBuffer,"Description",img->description);
     }
-    for ()
     return returnedBuffer;
 }
 
@@ -69,10 +73,11 @@ void deleteAttribute( void* data) {
         return;
     }
     
-    tempAttribute = (Attribute*) data;
+    /*tempAttribute = (Attribute*) data;
     free(tempAttribute->name);
     free(tempAttribute->value);
-    free(tempAttribute);
+    free(tempAttribute);*/
+    return;
 
 }
 
@@ -83,7 +88,7 @@ char* attributeToString( void* data) {
     Attribute* tempAttribute;
 
     if (data == NULL) {
-        return;
+        return NULL;
     }
 
     tempAttribute = (Attribute *)data;
@@ -107,3 +112,22 @@ int compareAttributes(const void *first, const void *second) {
     return strcmp(firstAttr->value,secondAttr->value);
 
 }
+
+void deleteRectangle(void* data){
+    return;
+}
+
+char* rectangleToString(void* data) {
+    return;
+}
+
+int compareRectangles(const void *first, const void *second) {
+    return;
+}
+
+void deleteCircle(void* data){return;}
+char* circleToString(void* data){return;}
+int compareCircles(const void *first, const void *second){return;}
+void deletePath(void* data){return;}
+char* pathToString(void* data){return;}
+int comparePaths(const void *first, const void *second){return;}
