@@ -19,13 +19,13 @@ $(BIN)LinkedListAPI.o: $(SRC)LinkedListAPI.c $(INC)LinkedListAPI.h
 	gcc -c -fpic $(CFLAGS) -I$(INC) $(SRC)LinkedListAPI.c -o $(BIN)LinkedListAPI.o
 
 test_harness: $(SRC)LinkedListAPI.c $(SRC)SVGParser.c
-	gcc $(CFLAGS) -g -I$(INC) -I$(XML_PATH) -L./bin -lsvgparse -lxml2 -lm $(SRC)test.c -o $(BIN)test_harness.o 
+	gcc $(CFLAGS) -g -I$(INC) -I$(XML_PATH) -L./bin -lsvgparse -lxml2 -lm $(SRC)test.c -o $(BIN)test_harness
 
-valgrind:
-	cd bin; valgrind $(VALGRIND_FLAGS) ./test_harness.o $(SVG_FILE)
+valgrind: test_harness
+	cd bin; valgrind $(VALGRIND_FLAGS) ./test_harness $(SVG_FILE)
 
-run_test:
-	cd bin; ./test_harness.o $(SVG_FILE)
+run_test: test_harness
+	cd bin; ./test_harness $(SVG_FILE)
 
 xmlExample: 
 	$(CC) $(CFLAGS) -I$(INC) -lxml2 -I$(XML_PATH) $(XMLFLAGS) $(SRC)libXmlExample.c -o $(BIN)xmlExample.o
