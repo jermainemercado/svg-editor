@@ -277,6 +277,121 @@ void setAttribute(SVGimage* image, elementType elemType, int elemIndex, Attribut
  **/
 void addComponent(SVGimage* image, elementType type, void* newElement);
 
+/** Function to converting an Attribute into a JSON string
+*@pre Attribute is not NULL
+*@post Attribute has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to an Attribute struct
+**/
+char* attrToJSON(const Attribute *a);
+
+/** Function to converting a Circle into a JSON string
+*@pre Circle is not NULL
+*@post Circle has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a Circle struct
+**/
+char* circleToJSON(const Circle *c);
+
+/** Function to converting a Rectangle into a JSON string
+*@pre Rectangle is not NULL
+*@post Rectangle has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a Rectangle struct
+**/
+char* rectToJSON(const Rectangle *r);
+
+/** Function to converting a Path into a JSON string
+*@pre Path is not NULL
+*@post Path has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a Path struct
+**/
+char* pathToJSON(const Path *p);
+
+/** Function to converting a Group into a JSON string
+*@pre Group is not NULL
+*@post Group has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a Group struct
+**/
+char* groupToJSON(const Group *g);
+
+/** Function to converting a list of Attribute structs into a JSON string
+*@pre Attribute list is not NULL
+*@post Attribute list has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a List struct
+**/
+char* attrListToJSON(const List *list);
+
+/** Function to converting a list of Circle structs into a JSON string
+*@pre Circle list is not NULL
+*@post Circle list has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a List struct
+**/
+char* circListToJSON(const List *list);
+
+/** Function to converting a list of Rectangle structs into a JSON string
+*@pre Rectangle list is not NULL
+*@post Rectangle list has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a List struct
+**/
+char* rectListToJSON(const List *list);
+
+/** Function to converting a list of Path structs into a JSON string
+*@pre Path list is not NULL
+*@post Path list has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a List struct
+**/
+char* pathListToJSON(const List *list);
+
+/** Function to converting a list of Group structs into a JSON string
+*@pre Group list is not NULL
+*@post Group list has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to a List struct
+**/
+char* groupListToJSON(const List *list);
+
+/** Function to converting an SVGimage into a JSON string
+*@pre SVGimage is not NULL
+*@post SVGimage has not been modified in any way
+*@return A string in JSON format
+*@param event - a pointer to an SVGimage struct
+**/
+char* SVGtoJSON(const SVGimage* imge);
+
+/* ******************************* Bonus A2 functions - optional for A2 *************************** */
+
+/** Function to converting a JSON string into an SVGimage struct
+*@pre JSON string is not NULL
+*@post String has not been modified in any way
+*@return A newly allocated and initialized SVGimage struct
+*@param str - a pointer to a string
+**/
+SVGimage* JSONtoSVG(const char* svgString);
+
+/** Function to converting a JSON string into a Rectangle struct
+*@pre JSON string is not NULL
+*@post Rectangle has not been modified in any way
+*@return A newly allocated and initialized Rectangle struct
+*@param str - a pointer to a string
+**/
+Rectangle* JSONtoRect(const char* svgString);
+
+/** Function to converting a JSON string into a Circle struct
+*@pre JSON string is not NULL
+*@post Circle has not been modified in any way
+*@return A newly allocated and initialized Circle struct
+*@param str - a pointer to a string
+**/
+Circle* JSONtoCircle(const char* svgString);
+
+
 /* ******************************* List helper functions  - MUST be implemented *************************** */
 
 void deleteAttribute( void* data);
