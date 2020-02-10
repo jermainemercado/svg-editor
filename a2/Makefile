@@ -1,47 +1,35 @@
-UNAME := $(shell uname)
-CC = gcc
-CFLAGS = -Wall -std=c11 -g
-LDFLAGS= -L./bin
-XMLFLAGS = `xml2-config --cflags --libs`
-IDIR = ./includes/
-SRCDIR = ./src/
-BINDIR = ./bin/
+  
+CFLAGS = -Wall -g -std=c11
+BIN = bin/
+INC = include/
+SRC = src/
+XML_PATH = /usr/include/libxml2
+VALGRIND_FLAGS = --leak-check=full --show-leak-kinds=all --track-origins=yes --log-file=valgrind-out.txt
+SVG_FILE = 
 
+# Standard common makefile
+parser: $(BIN)libsvgparse.so test_harness
 
-ifeq ($(UNAME), Linux)
-	INC_PATH = /usr/include/libxml2
-endif
-ifeq ($(UNAME), Darwin)
-	INC_PATH = /System/Volumes/Data/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libxml2
-endif
+$(BIN)libsvgparse.so: $(BIN)SVGParser.o $(BIN)LinkedListAPI.o
+	gcc -shared -o $(BIN)libsvgparse.so $(BIN)SVGParser.o $(BIN)LinkedListAPI.o -lxml2 -lm
 
+$(BIN)SVGParser.o: $(SRC)SVGParser.c $(INC)LinkedListAPI.h $(INC)SVGParser.h
+	gcc -c -fpic $(CFLAGS) -I$(XML_PATH) -I$(INC) $(SRC)SVGParser.c -o $(BIN)SVGParser.o
 
+$(BIN)LinkedListAPI.o: $(SRC)LinkedListAPI.c $(INC)LinkedListAPI.h
+	gcc -c -fpic $(CFLAGS) -I$(INC) $(SRC)LinkedListAPI.c -o $(BIN)LinkedListAPI.o
 
+test_harness: $(SRC)LinkedListAPI.c $(SRC)SVGParser.c
+	gcc $(CFLAGS) -g -I$(INC) -I$(XML_PATH) -L./bin -lsvgparse -lxml2 -lm $(SRC)test.c -o $(BIN)test_harness
 
-#all: LinkedListAPI.o liblist.so xmlExample StructListDemo.o StructListDemo
-#	
-#StructListDemo: $(BINDIR)StructListDemo.o $(BINDIR)liblist.so
-#	$(CC) $(CFLAGS) $(LDFLAGS) -I$(INC_PATH) -I$(IDIR) -llist $(BINDIR)StructListDemo.o  -o $(BINDIR)StructListDemo 
-#	
-LinkedListAPI.o: $(SRCDIR)LinkedListAPI.c $(IDIR)LinkedListAPI.h
-	$(CC) $(CFLAGS) -I$(IDIR) -c -fpic $(SRCDIR)LinkedListAPI.c -o $(BINDIR)LinkedListAPI.o
-#
-liblist.so: $(BINDIR)LinkedListAPI.o
-	$(CC) -shared $(BINDIR)LinkedListAPI.o -o $(BINDIR)liblist.so
-#
-SVGParser.o: $(SRCDIR)SVGParser.c $(IDIR)SVGParser.h
-	$(CC) $(CFLAGS) -I$(IDIR) -c -fpic $(XMLFLAGS) $(SRCDIR)SVGParser.c -o $(BINDIR)$@
+valgrind: test_harness
+	cd bin; valgrind $(VALGRIND_FLAGS) ./test_harness $(SVG_FILE)
 
-libsvg.so: $(BINDIR)SVGParser.o 
-	$(CC) -shared $(BINDIR)SVGParser.o -o $(BINDIR)$@
-#xmlExample: $(SRCDIR)libXmlExample.c
-#	$(CC) $(CFLAGS) -I$(IDIR) $(XMLFLAGS) $(SRCDIR)libXmlExample.c -o $(BINDIR)xmlExample
-#
-#StructListDemo.o: $(SRCDIR)StructListDemo.c
-#	$(CC) $(CFLAGS) -I$(IDIR) -c $(SRCDIR)StructListDemo.c -o $(BINDIR)StructListDemo.o
-#	
-#runDemo: $(BINDIR)StructListDemo
-#	./bin/StructListDemo
-#
+run_test: test_harness
+	cd bin; ./test_harness $(SVG_FILE)
+
+xmlExample: 
+	$(CC) $(CFLAGS) -I$(INC) -lxml2 -I$(XML_PATH) $(XMLFLAGS) $(SRC)libXmlExample.c -o $(BIN)xmlExample.o
+
 clean:
-	rm -rf *.o *.so **/*.o **/*.so
+	rm -rf $(BIN)*.so $(BIN)*.o $(BIN)*.txt
