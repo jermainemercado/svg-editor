@@ -32,7 +32,8 @@ SVGimage* createSVGimage(char* fileName) {
     }
 
     if (doc == NULL) {
-        printf("\nError: Could not parse file %s\n", fileName);
+        printf("\nError: Could not parse file: %s\n", fileName);
+        return NULL;
     }
 
     root_element = xmlDocGetRootElement(doc);
