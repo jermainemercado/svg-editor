@@ -408,8 +408,6 @@ Rectangle* rectangleParser(xmlNode* xml_node) {
     Rectangle* cur_rect;
 
     cur_rect = malloc(sizeof(Rectangle));
-    cur_rect->x = -1;
-    cur_rect->y = -1;
     cur_rect->width = -1;
     cur_rect->height = -1;
     cur_rect->units[0] = '\0';
@@ -452,12 +450,6 @@ Rectangle* rectangleParser(xmlNode* xml_node) {
                 insertBack(cur_rect->otherAttributes,cur_attr);
             }
         }
-        if(cur_rect->x < 0) {
-            cur_rect->x = 0;
-        }
-        if(cur_rect->y < 0) {
-            cur_rect->y = 0;
-        }
         if(cur_rect->height < 0) {
             cur_rect->height = 0;
         }
@@ -478,8 +470,6 @@ Circle* circleParser(xmlNode* xml_node) {
     char* units = NULL;
 
     cur_circle = malloc(sizeof(Circle));
-    cur_circle->cx = -1;
-    cur_circle->cy = -1;
     cur_circle->r = -1;
     cur_circle->units[0] = '\0';
     cur_circle->otherAttributes = initializeList(&attributeToString,&deleteAttribute,&compareAttributes);
@@ -512,12 +502,6 @@ Circle* circleParser(xmlNode* xml_node) {
                 strcpy(cur_attr->value,cont);
                 insertBack(cur_circle->otherAttributes,cur_attr);
             }
-        }
-        if(cur_circle->cx < 0) {
-            cur_circle->cx = 0;
-        }
-        if(cur_circle->cy < 0) {
-            cur_circle->cy = 0;
         }
         if(cur_circle->r < 0) {
             cur_circle->r = 0;
@@ -607,20 +591,20 @@ char* rectAttrToString(Rectangle* rectangleToPrint) {
     char *returnedBuffer = NULL;
     int bytesNeeded = 0;
 
-    if (rectangleToPrint->x >= 0) {
-        bytesNeeded = snprintf(NULL,0,"\nRectangle X Coordinate:\n\t%.2f\n", rectangleToPrint->x) + 1;
-        backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nRectangle X Coordinate:\n\t%.2f\n", rectangleToPrint->x);
-        strcpy(returnedBuffer, backupBuffer);
-    } 
-    if (rectangleToPrint->y >= 0 ) {
-        bytesNeeded += snprintf(NULL,0,"\nRectangle Y Coordinate:\n\t%.2f\n", rectangleToPrint->y);
-        backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nRectangle Y Coordinate:\n\t%.2f\n", rectangleToPrint->y);
-        strcat(returnedBuffer, backupBuffer);
-    }
+    //PRINT X COORDINATE
+    bytesNeeded = snprintf(NULL,0,"\nRectangle X Coordinate:\n\t%.2f\n", rectangleToPrint->x) + 1;
+    backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
+    returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
+    sprintf(backupBuffer, "\nRectangle X Coordinate:\n\t%.2f\n", rectangleToPrint->x);
+    strcpy(returnedBuffer, backupBuffer);
+
+    //PRINT Y COORDINATE
+    bytesNeeded += snprintf(NULL,0,"\nRectangle Y Coordinate:\n\t%.2f\n", rectangleToPrint->y);
+    backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
+    returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
+    sprintf(backupBuffer, "\nRectangle Y Coordinate:\n\t%.2f\n", rectangleToPrint->y);
+    strcat(returnedBuffer, backupBuffer);
+
     if (rectangleToPrint->width >= 0 ) {
         bytesNeeded += snprintf(NULL,0,"\nRectangle Width:\n\t%.2f\n",rectangleToPrint->width);
         backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
@@ -668,20 +652,19 @@ char* circleAttrToString(Circle* circleToPrint) {
     int bytesNeeded = 0;
 
 
-    if (circleToPrint->cx >= 0) {
-        bytesNeeded += snprintf(NULL,0,"\nCircle X Coordinate:\n\t%.2f\n", circleToPrint->cx) + 1;
-        backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nCircle X Coordinate:\n\t%.2f\n", circleToPrint->cx);
-        strcpy(returnedBuffer, backupBuffer);
-    } 
-    if (circleToPrint->cy >= 0 ) {
-        bytesNeeded += snprintf(NULL,0,"\nCircle Y Coordinate:\n\t%.2f\n", circleToPrint->cy) + 1;
-        backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
-        returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
-        sprintf(backupBuffer, "\nCircle Y Coordinate:\n\t%.2f\n", circleToPrint->cy);
-        strcat(returnedBuffer, backupBuffer);
-    }
+    //PRINT X AND Y COORDINATES.
+    bytesNeeded += snprintf(NULL,0,"\nCircle X Coordinate:\n\t%.2f\n", circleToPrint->cx) + 1;
+    backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
+    returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
+    sprintf(backupBuffer, "\nCircle X Coordinate:\n\t%.2f\n", circleToPrint->cx);
+    strcpy(returnedBuffer, backupBuffer);
+
+    bytesNeeded += snprintf(NULL,0,"\nCircle Y Coordinate:\n\t%.2f\n", circleToPrint->cy) + 1;
+    backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
+    returnedBuffer = realloc(returnedBuffer, bytesNeeded + 1);
+    sprintf(backupBuffer, "\nCircle Y Coordinate:\n\t%.2f\n", circleToPrint->cy);
+    strcat(returnedBuffer, backupBuffer);
+
     if (circleToPrint->r >= 0 ) {
         bytesNeeded += snprintf(NULL,0,"\nCircle Radius:\n\t%.2f\n",circleToPrint->r) + 1;
         backupBuffer = realloc(backupBuffer, bytesNeeded + 1);
@@ -1217,20 +1200,48 @@ xmlDocPtr convertSVGimage(SVGimage* image, char* fileName) {
     docNamespace = xmlNewNs(root_node, (xmlChar*)image->namespace, NULL);
     xmlSetNs(root_node, docNamespace);
 
-    //Parse Rectangles
-    imgRectToXml(image, root_node);
-    imgCircleToXml(image, root_node);
-    imgPathToXml(image, root_node);
-    imgGroupToXml(image, root_node);
-    //THINK ABOUT PASSING A LIST TO THE FUNCTION INSTEAD OF THE IMAGE.
+    //Set title and desc.
+    if (image->title[0] != '\0') {
+        xmlNewChild(root_node,NULL, (xmlChar*) "title", (xmlChar*) image->title);
+    }
+    if (image->desc[0] != '\0') {
+        xmlNewChild(root_node,NULL, (xmlChar*) "desc", (xmlChar*) image->description);
+    }
+
+    //Parse Elements
+    imgOtherToXml(image->otherAttributes, root_node);
+    imgRectToXml(image->rectangles, root_node);
+    imgCircleToXml(image->circles, root_node);
+    imgPathToXml(image->paths, root_node);
+    imgGroupToXml(image->groups, root_node);
 
     return doc;
 }
 
-void imgRectToXml(SVGimage* image, xmlNodePtr root_node) {
+void imgOtherToXml(List* imageAttributes, xmlNodePtr root_node) {
+
+    List* attrList = initalizeList(&attributeToString, &deleteStub, &compareAttributes);
+    ListIterator attrIter = createIterator(imageAttributes);
+    void* elem = NULL;
+    xmlNodePtr node = NULL;
+
+    while((elem = nextElement(&attrIter)) != NULL) {
+        Attribute* tmpAttr = (Attribute*)elem;
+        insertBack(attrList, tmpAttr);
+    }
+    
+    ListIterator iter = createIterator(attrList);
+    while((elem = nextElement(&iter)) != NULL) {
+        Attribute* tmpAttr = (Attribute*)elem;
+        xmlNewProp(root_node, (xmlChar*) tmpAttr->name, (xmlChar*) tmpAttr->value);
+    }
+    freeList(attrList);
+}
+
+void imgRectToXml(List* imageRectangles, xmlNodePtr root_node) {
 
     List* rectList = initializeList(&rectangleToString, &deleteStub, &compareRectangles);
-    ListIterator rectIter = createIterator(image->rectangles);
+    ListIterator rectIter = createIterator(imageRectangles);
     void* elem = NULL;
     xmlNodePtr node = NULL;
     char* attrBuf = NULL;
@@ -1246,7 +1257,7 @@ void imgRectToXml(SVGimage* image, xmlNodePtr root_node) {
         Rectangle* tmpRect = (Rectangle*)elem;
         node = xmlNewNode(NULL, (xmlChar*) "rect");
 
-        if (tmpRect->units[0] == '\0' || tmpRect->units == NULL) {
+        if (tmpRect->units[0] != '\0' && tmpRect->units != NULL) {
             bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->x, tmpRect->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f%s", tmpRect->x,tmpRect->units);
@@ -1265,7 +1276,8 @@ void imgRectToXml(SVGimage* image, xmlNodePtr root_node) {
             bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->length, tmpRect->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f%s", tmpRect->length, tmpRect->units);
-            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf);            
+            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf);  
+
         } else {
 
             bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->x);
@@ -1297,14 +1309,15 @@ void imgRectToXml(SVGimage* image, xmlNodePtr root_node) {
                 xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
             }
         }
+        xmlAddChild(root_node, node);
     }
     freeList(rectList);
 }
 
-void imgCircleToXml(SVGimage* image, xmlNodePtr root_node) {
+void imgCircleToXml(List* imageCircles, xmlNodePtr root_node) {
 
     List* circleList = initializeList(&circleToString, &deleteStub, &compareCircles);
-    ListIterator circleIter = createIterator(image->circles);
+    ListIterator circleIter = createIterator(imageCircles);
     void* elem = NULL;
     xmlNodePtr node = NULL;
     char* attrBuf = NULL;
@@ -1320,7 +1333,7 @@ void imgCircleToXml(SVGimage* image, xmlNodePtr root_node) {
         Circle* tmpCircle = (Circle*)elem;
         node = xmlNewNode(NULL, (xmlChar*) "circle");
 
-        if (tmpCircle->units[0] == '\0' || tmpCircle->units == NULL) {
+        if (tmpCircle->units[0] != '\0' && tmpCircle->units != NULL) {
             bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->cx, tmpCircle->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f%s", tmpCircle->cx, tmpCircle->units);
@@ -1361,18 +1374,17 @@ void imgCircleToXml(SVGimage* image, xmlNodePtr root_node) {
                 xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
             }
         }
+        xmlAddChild(root_node, node);   
     }
     freeList(circleList);
 }
 
-void imgPathToXml(SVGimage* image, xmlNodePtr root_node) {3
+void imgPathToXml(List* imagePaths, xmlNodePtr root_node) {
 
     List* pathList = initializeList(&pathToString, &deleteStub, &comparePaths);
-    ListIterator pathIter = createIterator(image->paths);
+    ListIterator pathIter = createIterator(imagePaths);
     void* elem = NULL;
     xmlNodePtr node = NULL;
-    char* attrBuf = NULL;
-    int bytesNeeded = 0;
 
     while ((elem = nextElement(&pathIter)) != NULL) {
         Path* tmpPath = (Path*)elem;
@@ -1394,6 +1406,50 @@ void imgPathToXml(SVGimage* image, xmlNodePtr root_node) {3
                 xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
             }
         }
+        xmlAddChild(root_node, node);
     }
     freeList(pathList);
+}
+
+void imgGroupToXml(List* imageGroups, XmlNodePtr root_node) {
+
+    List* groupList = initalizeList(&groupToString, &deleteStub, &compareGroups);
+    ListIterator groupIter = createIterator(imageGroups);
+    void* elem = NULL;
+    xmlNodePtr node = NULL;
+
+    while((elem = nextElement(&groupIter)) != NULL) {
+        Group* tmpGroup = (Group*)elem;
+        insertBack(groupList,tmpGroup);
+    }
+    
+    ListIterator iter = createIterator(groupList);
+    while((elem = nextElement(&iter)) != NULL) {
+        Group* tmpGroup = (Group*)elem;
+        node = xmlNewNode(NULL, (xmlChar*) "g");
+
+        if (getFromFront(tmpGroup->otherAttributes) != NULL) {
+            ListIterator otherIter = createIterator(tmpGroup->otherAttributes);
+            void* otherElem = NULL;
+
+            while((elem = nextElement(&otherIter)) != NULL) {
+                Attribute* tmpAttr = (Attribute*) otherElem;
+                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+            }
+        }
+        if (getFromFront(tmpGroup->rectangles) != NULL) {
+            imgRectToXml(tmpGroup->rectangles,node);
+        }
+        if (getFromFront(tmpGroup->circles) != NULL) {
+            imgCircleToXml(tmpgroup->circles,node);
+        }
+        if (getFromFront(tmpGroup->paths) != NULL) {
+            imgPathToXml(tmpGroup->paths,node);
+        }
+        if (getFromFront(tmpGroup->groups) != NULL) {
+            imgGroupToXml(tmpGroup->groups,node);
+        }
+        xmlAddChild(root_node, node);        
+    }
+    freeList(groupList);
 }
