@@ -27,6 +27,10 @@ void groupGetter(Group* group, List* groupList);
 void getPathsHelper(Group* group, List* pathList);
 void getCirclesHelper(Group* group, List* circleList);
 void getRectsHelper(Group* group, List* rectList);
+//ASSIGNMENT 2
 xmlDocPtr convertSVGimage(SVGimage* image, char* fileName);
+void imgRectToXml(SVGimage* image, xmlNodePtr root_node);
+void imgCircleToXml(SVGimage* image, xmlNodePtr root_node);
+void imgPathToXml(SVGimage* image, xmlNodePtr root_node);
 
 #endif

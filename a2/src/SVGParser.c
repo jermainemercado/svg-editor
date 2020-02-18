@@ -33,6 +33,7 @@ SVGimage* createSVGimage(char* fileName) {
 
     if (doc == NULL) {
         printf("\nError: Could not parse file: %s\n", fileName);
+        xmlCleanupParser();
         return NULL;
     }
 
@@ -1216,5 +1217,183 @@ xmlDocPtr convertSVGimage(SVGimage* image, char* fileName) {
     docNamespace = xmlNewNs(root_node, (xmlChar*)image->namespace, NULL);
     xmlSetNs(root_node, docNamespace);
 
+    //Parse Rectangles
+    imgRectToXml(image, root_node);
+    imgCircleToXml(image, root_node);
+    imgPathToXml(image, root_node);
+    imgGroupToXml(image, root_node);
+    //THINK ABOUT PASSING A LIST TO THE FUNCTION INSTEAD OF THE IMAGE.
+
     return doc;
+}
+
+void imgRectToXml(SVGimage* image, xmlNodePtr root_node) {
+
+    List* rectList = initializeList(&rectangleToString, &deleteStub, &compareRectangles);
+    ListIterator rectIter = createIterator(image->rectangles);
+    void* elem = NULL;
+    xmlNodePtr node = NULL;
+    char* attrBuf = NULL;
+    int bytesNeeded = 0;
+
+    while ((elem = nextElement(&rectIter)) != NULL) {
+        Rectangle* tmpRect = (Rectangle*)elem;
+        insertBack(rectList, tmpRect);
+    }
+    
+    ListIterator iter = createIterator(rectList);
+    while ((elem = nextElement(&iter)) != NULL) {
+        Rectangle* tmpRect = (Rectangle*)elem;
+        node = xmlNewNode(NULL, (xmlChar*) "rect");
+
+        if (tmpRect->units[0] == '\0' || tmpRect->units == NULL) {
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->x, tmpRect->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpRect->x,tmpRect->units);
+            xmlNewProp(node, (xmlChar*) "x", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->y, tmpRect->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpRect->y, tmpRect->units);
+            xmlNewProp(node, (xmlChar*) "y", (xmlChar*) attrBuf);
+            
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->width, tmpRect->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpRect->width, tmpRect->units);
+            xmlNewProp(node, (xmlChar*) "width", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->length, tmpRect->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpRect->length, tmpRect->units);
+            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf);            
+        } else {
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->x);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpRect->x);
+            xmlNewProp(node, (xmlChar*) "x", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->y);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpRect->y);
+            xmlNewProp(node, (xmlChar*) "y", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->width);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpRect->width);
+            xmlNewProp(node, (xmlChar*) "width", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->length);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpRect->length);
+            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf); 
+        }
+        if (getFromFront(tmpRect->otherAttributes) != NULL) {
+            ListIterator otherIter = createIterator(tmpRect->otherAttributes);
+            void* otherElem = NULL;
+
+            while((elem = nextElement(&otherIter)) != NULL) {
+                Attribute* tmpAttr = (Attribute*) otherElem;
+                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+            }
+        }
+    }
+    freeList(rectList);
+}
+
+void imgCircleToXml(SVGimage* image, xmlNodePtr root_node) {
+
+    List* circleList = initializeList(&circleToString, &deleteStub, &compareCircles);
+    ListIterator circleIter = createIterator(image->circles);
+    void* elem = NULL;
+    xmlNodePtr node = NULL;
+    char* attrBuf = NULL;
+    int bytesNeeded = 0;
+
+    while ((elem = nextElement(&circleIter)) != NULL) {
+        Circle* tmpCircle = (Circle*)elem;
+        insertBack(circleList, tmpCircle);
+    }
+    
+    ListIterator iter = createIterator(circleList);
+    while ((elem = nextElement(&iter)) != NULL) {
+        Circle* tmpCircle = (Circle*)elem;
+        node = xmlNewNode(NULL, (xmlChar*) "circle");
+
+        if (tmpCircle->units[0] == '\0' || tmpCircle->units == NULL) {
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->cx, tmpCircle->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpCircle->cx, tmpCircle->units);
+            xmlNewProp(node, (xmlChar*) "cx", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->cy, tmpCircle->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpCircle->cy, tmpCircle->units);
+            xmlNewProp(node, (xmlChar*) "cy", (xmlChar*) attrBuf);
+            
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->r, tmpCircle->units);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f%s", tmpCircle->r, tmpCircle->units);
+            xmlNewProp(node, (xmlChar*) "r", (xmlChar*) attrBuf);        
+        } else {
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cx);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpCircle->cx);
+            xmlNewProp(node, (xmlChar*) "cx", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cy);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpCircle->cy);
+            xmlNewProp(node, (xmlChar*) "cy", (xmlChar*) attrBuf);
+
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->r);
+            attrBuf = realloc(attrBuf, bytesNeeded);
+            sprintf(attrBuf, "%.2f", tmpCircle->r);
+            xmlNewProp(node, (xmlChar*) "r", (xmlChar*) attrBuf);
+        }
+        if (getFromFront(tmpCircle->otherAttributes) != NULL) {
+            ListIterator otherIter = createIterator(tmpCircle->otherAttributes);
+            void* otherElem = NULL;
+
+            while((elem = nextElement(&otherIter)) != NULL) {
+                Attribute* tmpAttr = (Attribute*) otherElem;
+                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+            }
+        }
+    }
+    freeList(circleList);
+}
+
+void imgPathToXml(SVGimage* image, xmlNodePtr root_node) {3
+
+    List* pathList = initializeList(&pathToString, &deleteStub, &comparePaths);
+    ListIterator pathIter = createIterator(image->paths);
+    void* elem = NULL;
+    xmlNodePtr node = NULL;
+    char* attrBuf = NULL;
+    int bytesNeeded = 0;
+
+    while ((elem = nextElement(&pathIter)) != NULL) {
+        Path* tmpPath = (Path*)elem;
+        insertBack(pathList, tmpPath);
+    }
+    
+    ListIterator iter = createIterator(pathList);
+    while ((elem = nextElement(&iter)) != NULL) {
+        Path* tmpPath = (Path*)elem;
+        node = xmlNewNode(NULL, (xmlChar*) "path");
+        xmlNewProp(node, (xmlChar*) "d", (xmlChar*) tmpPath->data);
+
+        if (getFromFront(tmpPath->otherAttributes) != NULL) {
+            ListIterator otherIter = createIterator(tmpPath->otherAttributes);
+            void* otherElem = NULL;
+
+            while((elem = nextElement(&otherIter)) != NULL) {
+                Attribute* tmpAttr = (Attribute*) otherElem;
+                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+            }
+        }
+    }
+    freeList(pathList);
 }
