@@ -422,15 +422,9 @@ Rectangle* rectangleParser(xmlNode* xml_node) {
             char *cont = (char *)(value->content);
             
             if(!(strcasecmp(attrName,"X"))) {
-                cur_rect->x = strtof(cont, &units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_rect->units,units);
-                }
+                cur_rect->x = strtof(cont, NULL);
             }else if(!(strcasecmp(attrName,"Y"))) {
-                cur_rect->y = strtof(cont, &units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_rect->units,units);
-                }
+                cur_rect->y = strtof(cont, NULL);
             }else if(!(strcasecmp(attrName,"width"))) {
                 cur_rect->width = strtof(cont,&units);
                 if (isalpha(units[0]) != 0) {
@@ -480,15 +474,9 @@ Circle* circleParser(xmlNode* xml_node) {
             char *cont = (char *)(value->content);
 
             if(!(strcasecmp(attrName,"CX"))) {
-                cur_circle->cx = strtof(cont, &units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_circle->units,units);
-                }
+                cur_circle->cx = strtof(cont, NULL);
             }else if(!(strcasecmp(attrName,"CY"))) {
-                cur_circle->cy = strtof(cont, &units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_circle->units,units);
-                }
+                cur_circle->cy = strtof(cont, NULL);
             }else if(!(strcasecmp(attrName,"R"))) {
                 cur_circle->r = strtof(cont,&units);
                 if (isalpha(units[0]) != 0) {
@@ -1146,12 +1134,56 @@ int numAttr(SVGimage* img) {
  *@return the boolean aud indicating whether the SVGimage is valid
  *@param obj - a pointer to a GPXSVGimagedoc struct
  *@param obj - the name iof a schema file
+ //validateSVGimage is based on http://knol2share.blogspot.com/2009/05/validate-xml-against-xsd-in-c.html
+ //retrieved on Wednesday February 19, 2020.
  **/
 bool validateSVGimage(SVGimage* image, char* schemaFile) {
     
     if (image == NULL || schemaFile == NULL || schemaFile[0] == '\0') {
         return false;
     }
+    if (image->rectangles == NULL || image->circles == NULL || image->paths == NULL || image->groups == NULL || image->otherAttributes == NULL || validateHelper(image) == false) {
+        return false;
+    }
+
+    xmlDocPtr doc;
+	xmlSchemaPtr schema = NULL;
+	xmlSchemaParserCtxtPtr ctxt;
+	char *XSDFileName = schemaFile;
+
+    xmlLineNumbersDefault(1);
+
+    ctxt = xmlSchemaNewParserCtxt(XSDFileName);
+
+    xmlSchemaSetParserErrors(ctxt, (xmlSchemaValidityErrorFunc) fprintf, (xmlSchemaValidityWarningFunc) fprintf, stderr);
+    schema = xmlSchemaParse(ctxt);
+    xmlSchemaFreeParserCtxt(ctxt);
+
+    doc = convertSVGimage(image);
+	if (doc == NULL) {
+		    return false;
+	} else {
+		xmlSchemaValidCtxtPtr ctxt;
+		int ret;
+
+		ctxt = xmlSchemaNewValidCtxt(schema);
+		xmlSchemaSetValidErrors(ctxt, (xmlSchemaValidityErrorFunc) fprintf, (xmlSchemaValidityWarningFunc) fprintf, stderr);
+		ret = xmlSchemaValidateDoc(ctxt, doc);
+		if (ret != 0) {
+            return false;
+        }
+		xmlSchemaFreeValidCtxt(ctxt);
+		xmlFreeDoc(doc);
+	}
+
+	// free the resource
+    if(schema != NULL) {
+    	xmlSchemaFree(schema);
+    }
+    xmlSchemaCleanupTypes();
+    xmlCleanupParser();
+    xmlMemoryDump();
+
     return true;
 
 }
@@ -1169,7 +1201,18 @@ bool validateSVGimage(SVGimage* image, char* schemaFile) {
  *@return the pinter to the new struct or NULL
  *@param fileName - a string containing the name of the SVG file
 **/
-SVGimage* createValidSVGimage(char* fileName, char* schemaFile);
+SVGimage* createValidSVGimage(char* fileName, char* schemaFile) {
+
+    if (fileName == NULL || fileName[0] == '\0' || schemaFile == NULL || schemaFile[0] == '\0' || access(fileName, F_OK) != 0 || access(schemaFile, F_OK) != 0) {
+        return NULL;
+    }
+    SVGimage* image = createSVGimage(fileName);
+    if(validateSVGimage(image,schemaFile) == false) {
+        return NULL;
+    }
+
+    return image;
+}
 
 /** Function to writing a SVGimage into a file in SVG format.
  *@pre
@@ -1182,11 +1225,20 @@ SVGimage* createValidSVGimage(char* fileName, char* schemaFile);
     doc - a pointer to a SVGimage struct
  	fileName - the name of the output file
  **/
-bool writeSVGimage(SVGimage* image, char* fileName);
+bool writeSVGimage(SVGimage* image, char* fileName) {
+    if (image == NULL || fileName != NULL || strcasecmp(strrchr(fileName,'.'),".svg") != 0 || validateHelper(image) == false) {
+        return false;
+    }
+    xmlDocPtr doc = convertSVGimage(image);
+    xmlSaveFormatFileEnc(fileName, doc, "UTF-8", 1);
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+    return true;
+}
 
-xmlDocPtr convertSVGimage(SVGimage* image, char* fileName) {
+xmlDocPtr convertSVGimage(SVGimage* image) {
 
-    if (image == NULL || fileName == NULL || fileName[0] == '\0') {
+    if (image == NULL) {
         return NULL;
     }
 
@@ -1197,15 +1249,16 @@ xmlDocPtr convertSVGimage(SVGimage* image, char* fileName) {
     //Create new xmlDoc. Set root_node to type SVG. Populate namespace of doc.
     doc = xmlNewDoc((xmlChar*) "1.0");
     root_node = xmlNewNode(NULL, (xmlChar*) "svg");
+    xmlDocSetRootElement(doc,root_node);
     docNamespace = xmlNewNs(root_node, (xmlChar*)image->namespace, NULL);
     xmlSetNs(root_node, docNamespace);
 
     //Set title and desc.
     if (image->title[0] != '\0') {
-        xmlNewChild(root_node,NULL, (xmlChar*) "title", (xmlChar*) image->title);
+        xmlNewProp(root_node,(xmlChar*) "title", (xmlChar*) image->title);
     }
-    if (image->desc[0] != '\0') {
-        xmlNewChild(root_node,NULL, (xmlChar*) "desc", (xmlChar*) image->description);
+    if (image->description[0] != '\0') {
+        xmlNewProp(root_node, (xmlChar*) "desc", (xmlChar*) image->description);
     }
 
     //Parse Elements
@@ -1220,10 +1273,9 @@ xmlDocPtr convertSVGimage(SVGimage* image, char* fileName) {
 
 void imgOtherToXml(List* imageAttributes, xmlNodePtr root_node) {
 
-    List* attrList = initalizeList(&attributeToString, &deleteStub, &compareAttributes);
+    List* attrList = initializeList(&attributeToString, &deleteStub, &compareAttributes);
     ListIterator attrIter = createIterator(imageAttributes);
     void* elem = NULL;
-    xmlNodePtr node = NULL;
 
     while((elem = nextElement(&attrIter)) != NULL) {
         Attribute* tmpAttr = (Attribute*)elem;
@@ -1257,56 +1309,45 @@ void imgRectToXml(List* imageRectangles, xmlNodePtr root_node) {
         Rectangle* tmpRect = (Rectangle*)elem;
         node = xmlNewNode(NULL, (xmlChar*) "rect");
 
-        if (tmpRect->units[0] != '\0' && tmpRect->units != NULL) {
-            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->x, tmpRect->units);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f%s", tmpRect->x,tmpRect->units);
-            xmlNewProp(node, (xmlChar*) "x", (xmlChar*) attrBuf);
+        bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->x);
+        attrBuf = realloc(attrBuf, bytesNeeded);
+        sprintf(attrBuf, "%.2f", tmpRect->x);
+        xmlNewProp(node, (xmlChar*) "x", (xmlChar*) attrBuf);
 
-            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->y, tmpRect->units);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f%s", tmpRect->y, tmpRect->units);
-            xmlNewProp(node, (xmlChar*) "y", (xmlChar*) attrBuf);
-            
+        bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->y);
+        attrBuf = realloc(attrBuf, bytesNeeded);
+        sprintf(attrBuf, "%.2f", tmpRect->y);
+        xmlNewProp(node, (xmlChar*) "y", (xmlChar*) attrBuf);
+
+        if (tmpRect->units[0] != '\0' && tmpRect->units != NULL) {            
             bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->width, tmpRect->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f%s", tmpRect->width, tmpRect->units);
             xmlNewProp(node, (xmlChar*) "width", (xmlChar*) attrBuf);
 
-            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->length, tmpRect->units);
+            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpRect->height, tmpRect->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f%s", tmpRect->length, tmpRect->units);
-            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf);  
-
+            sprintf(attrBuf, "%.2f%s", tmpRect->height, tmpRect->units);
+            xmlNewProp(node, (xmlChar*) "height", (xmlChar*) attrBuf);  
         } else {
-
-            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->x);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f", tmpRect->x);
-            xmlNewProp(node, (xmlChar*) "x", (xmlChar*) attrBuf);
-
-            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->y);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f", tmpRect->y);
-            xmlNewProp(node, (xmlChar*) "y", (xmlChar*) attrBuf);
-
             bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->width);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f", tmpRect->width);
             xmlNewProp(node, (xmlChar*) "width", (xmlChar*) attrBuf);
 
-            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->length);
+            bytesNeeded = snprintf(NULL,0,"%.2f", tmpRect->height);
             attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f", tmpRect->length);
-            xmlNewProp(node, (xmlChar*) "length", (xmlChar*) attrBuf); 
+            sprintf(attrBuf, "%.2f", tmpRect->height);
+            xmlNewProp(node, (xmlChar*) "height", (xmlChar*) attrBuf); 
         }
+
         if (getFromFront(tmpRect->otherAttributes) != NULL) {
             ListIterator otherIter = createIterator(tmpRect->otherAttributes);
             void* otherElem = NULL;
 
             while((elem = nextElement(&otherIter)) != NULL) {
                 Attribute* tmpAttr = (Attribute*) otherElem;
-                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+                xmlNewProp(node, (xmlChar*) tmpAttr->name, (xmlChar*) tmpAttr->value); 
             }
         }
         xmlAddChild(root_node, node);
@@ -1333,45 +1374,35 @@ void imgCircleToXml(List* imageCircles, xmlNodePtr root_node) {
         Circle* tmpCircle = (Circle*)elem;
         node = xmlNewNode(NULL, (xmlChar*) "circle");
 
-        if (tmpCircle->units[0] != '\0' && tmpCircle->units != NULL) {
-            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->cx, tmpCircle->units);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f%s", tmpCircle->cx, tmpCircle->units);
-            xmlNewProp(node, (xmlChar*) "cx", (xmlChar*) attrBuf);
+        bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cx);
+        attrBuf = realloc(attrBuf, bytesNeeded);
+        sprintf(attrBuf, "%.2f", tmpCircle->cx);
+        xmlNewProp(node, (xmlChar*) "cx", (xmlChar*) attrBuf);
 
-            bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->cy, tmpCircle->units);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f%s", tmpCircle->cy, tmpCircle->units);
-            xmlNewProp(node, (xmlChar*) "cy", (xmlChar*) attrBuf);
-            
+        bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cy);
+        attrBuf = realloc(attrBuf, bytesNeeded);
+        sprintf(attrBuf, "%.2f", tmpCircle->cy);
+        xmlNewProp(node, (xmlChar*) "cy", (xmlChar*) attrBuf);
+
+        if (tmpCircle->units[0] != '\0' && tmpCircle->units != NULL) {
             bytesNeeded = snprintf(NULL,0,"%.2f%s", tmpCircle->r, tmpCircle->units);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f%s", tmpCircle->r, tmpCircle->units);
             xmlNewProp(node, (xmlChar*) "r", (xmlChar*) attrBuf);        
         } else {
-
-            bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cx);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f", tmpCircle->cx);
-            xmlNewProp(node, (xmlChar*) "cx", (xmlChar*) attrBuf);
-
-            bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->cy);
-            attrBuf = realloc(attrBuf, bytesNeeded);
-            sprintf(attrBuf, "%.2f", tmpCircle->cy);
-            xmlNewProp(node, (xmlChar*) "cy", (xmlChar*) attrBuf);
-
             bytesNeeded = snprintf(NULL,0,"%.2f", tmpCircle->r);
             attrBuf = realloc(attrBuf, bytesNeeded);
             sprintf(attrBuf, "%.2f", tmpCircle->r);
             xmlNewProp(node, (xmlChar*) "r", (xmlChar*) attrBuf);
         }
+
         if (getFromFront(tmpCircle->otherAttributes) != NULL) {
             ListIterator otherIter = createIterator(tmpCircle->otherAttributes);
             void* otherElem = NULL;
 
             while((elem = nextElement(&otherIter)) != NULL) {
                 Attribute* tmpAttr = (Attribute*) otherElem;
-                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+                xmlNewProp(node, (xmlChar*) tmpAttr->name, (xmlChar*) tmpAttr->value); 
             }
         }
         xmlAddChild(root_node, node);   
@@ -1403,7 +1434,7 @@ void imgPathToXml(List* imagePaths, xmlNodePtr root_node) {
 
             while((elem = nextElement(&otherIter)) != NULL) {
                 Attribute* tmpAttr = (Attribute*) otherElem;
-                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+                xmlNewProp(node, (xmlChar*) tmpAttr->name, (xmlChar*) tmpAttr->value); 
             }
         }
         xmlAddChild(root_node, node);
@@ -1411,9 +1442,9 @@ void imgPathToXml(List* imagePaths, xmlNodePtr root_node) {
     freeList(pathList);
 }
 
-void imgGroupToXml(List* imageGroups, XmlNodePtr root_node) {
+void imgGroupToXml(List* imageGroups, xmlNodePtr root_node) {
 
-    List* groupList = initalizeList(&groupToString, &deleteStub, &compareGroups);
+    List* groupList = initializeList(&groupToString, &deleteStub, &compareGroups);
     ListIterator groupIter = createIterator(imageGroups);
     void* elem = NULL;
     xmlNodePtr node = NULL;
@@ -1434,14 +1465,14 @@ void imgGroupToXml(List* imageGroups, XmlNodePtr root_node) {
 
             while((elem = nextElement(&otherIter)) != NULL) {
                 Attribute* tmpAttr = (Attribute*) otherElem;
-                xmlNewProp(node, (xmlChar*) otherElem->name, (xmlChar*) otherElem->value); 
+                xmlNewProp(node, (xmlChar*) tmpAttr->name, (xmlChar*) tmpAttr->value); 
             }
         }
         if (getFromFront(tmpGroup->rectangles) != NULL) {
             imgRectToXml(tmpGroup->rectangles,node);
         }
         if (getFromFront(tmpGroup->circles) != NULL) {
-            imgCircleToXml(tmpgroup->circles,node);
+            imgCircleToXml(tmpGroup->circles,node);
         }
         if (getFromFront(tmpGroup->paths) != NULL) {
             imgPathToXml(tmpGroup->paths,node);
@@ -1452,4 +1483,93 @@ void imgGroupToXml(List* imageGroups, XmlNodePtr root_node) {
         xmlAddChild(root_node, node);        
     }
     freeList(groupList);
+}
+
+bool validateHelper(SVGimage* image) {
+
+	void* elem = NULL;
+	ListIterator rectIter = createIterator(getRects(image));
+	ListIterator circleIter = createIterator(getCircles(image));
+	ListIterator pathIter = createIterator(getPaths(image));
+	ListIterator groupIter = createIterator(getGroups(image));
+
+	if (validateAttrs(image->otherAttributes) == false) {
+		return false;
+	}
+	while((elem = nextElement(&rectIter)) != NULL) {
+		Rectangle* tmpRect = (Rectangle*)elem;
+		if (validateRect(tmpRect) == false) {
+			return false;
+		}
+	}
+	while((elem = nextElement(&circleIter)) != NULL) {
+		Circle* tmpCircle = (Circle*)elem;
+		if (validateCircle(tmpCircle) == false) {
+			return false;
+		}
+	}
+	while((elem = nextElement(&pathIter)) != NULL) {
+		Path* tmpPath = (Path*)elem;
+		if (validatePath(tmpPath) == false) {
+			return false;
+		}
+	}
+	while((elem = nextElement(&groupIter)) != NULL)  {
+		Group* tmpGroup = (Group*)elem;
+		if (validateGroup(tmpGroup) == false) {
+			return false;
+		}
+	}
+	return true;
+
+}
+
+bool validateRect(Rectangle* imgRect) {
+
+	if (imgRect->height < 0 || imgRect->width < 0 || imgRect->otherAttributes == NULL || validateAttrs(imgRect->otherAttributes) == false) {
+		return false;
+	} else {
+		return true;
+	}
+
+}
+
+bool validateCircle(Circle* imgCircle) {
+
+	if (imgCircle->r < 0 || imgCircle->otherAttributes == NULL || validateAttrs(imgCircle->otherAttributes) == false) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool validatePath(Path* imgPath) {
+
+	if (imgPath->data == NULL || imgPath->otherAttributes == NULL || validateAttrs(imgPath->otherAttributes) == false) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool validateGroup(Group* imgGroup) {
+
+	if (imgGroup->rectangles == NULL || imgGroup->circles == NULL || imgGroup->paths == NULL || imgGroup->groups == NULL || imgGroup->otherAttributes == NULL || validateAttrs(imgGroup->otherAttributes) == false) {
+		return false;
+	} else {
+		return true;
+	}
+}
+
+bool validateAttrs(List* otherAttributes) {
+	ListIterator iter = createIterator(otherAttributes);
+	void* elem = NULL;
+
+	while((elem = nextElement(&iter)) != NULL) {
+		Attribute* tmpAttr = (Attribute*)elem;
+		if (tmpAttr->name == NULL || tmpAttr->value == NULL) {
+			return false;
+		}
+	}
+	return true;
 }

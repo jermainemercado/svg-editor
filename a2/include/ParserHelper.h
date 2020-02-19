@@ -2,6 +2,7 @@
 #define PARSERHELPER_H
 
 #include "SVGParser.h"
+#include <string.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -28,9 +29,17 @@ void getPathsHelper(Group* group, List* pathList);
 void getCirclesHelper(Group* group, List* circleList);
 void getRectsHelper(Group* group, List* rectList);
 //ASSIGNMENT 2
-xmlDocPtr convertSVGimage(SVGimage* image, char* fileName);
-void imgRectToXml(SVGimage* image, xmlNodePtr root_node);
-void imgCircleToXml(SVGimage* image, xmlNodePtr root_node);
-void imgPathToXml(SVGimage* image, xmlNodePtr root_node);
+xmlDocPtr convertSVGimage(SVGimage* image);
+void imgOtherToXml(List* imageAttributes, xmlNodePtr root_node);
+void imgRectToXml(List* imageRectangles, xmlNodePtr root_node);
+void imgCircleToXml(List* imageCircles, xmlNodePtr root_node);
+void imgPathToXml(List* imagePaths, xmlNodePtr root_node);
+void imgGroupToXml(List* imageGroups, xmlNodePtr root_node);
+bool validateHelper(SVGimage* image);
+bool validateAttrs(List* otherAttributes);
+bool validateRect(Rectangle* imgRect);
+bool validateCircle(Circle* imgCircle);
+bool validatePath(Path* imgPath);
+bool validateGroup(Group* imgGroup);
 
 #endif
