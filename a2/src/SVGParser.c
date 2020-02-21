@@ -1794,19 +1794,146 @@ void addComponent(SVGimage* image, elementType type, void* newElement){
 }
 char* attrToJSON(const Attribute *a){
 
-    if(a == NULL) {
-        return NULL;
-    }
     char* stringBuf = NULL;
-    int bytesNeeded = NULL;
+    int bytesNeeded = 0;
+    if(a == NULL || a->name == NULL || a->value == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;
     }
-char* circleToJSON(const Circle *c){return NULL;}
-char* rectToJSON(const Rectangle *r){return NULL;}
-char* pathToJSON(const Path *p){return NULL;}
-char* groupToJSON(const Group *g){return NULL;}
+
+
+    bytesNeeded = snprintf(NULL, 0, "{\"name\":\"%s\",\"value\":\"%s\"}", a->name, a->value) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
+    sprintf(stringBuf, "{\"name\":\"%s\",\"value\":\"%s\"}", a->name, a->value);
+    
+    return stringBuf;
+}
+
+char* circleToJSON(const Circle *c){
+
+    char* stringBuf = NULL;
+    int bytesNeeded = 0;
+    if(c == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;
+    }
+
+
+    bytesNeeded = snprintf(NULL, 0, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
+    sprintf(stringBuf, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units);
+
+    return stringBuf;
+}
+
+char* rectToJSON(const Rectangle *r){
+
+    char* stringBuf = NULL;
+    int bytesNeeded = 0;
+    if(r == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;
+    }
+
+
+    bytesNeeded = snprintf(NULL, 0, "{\"x\":%.2f,\"y\":%.2f,\"w\":%.2f,\"h\":%.2f,\"numAttr\":%d,\"units\":\"%s\"}", r->x, r->y, r->width, r->height, getLength(r->otherAttributes), r->units) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
+    sprintf(stringBuf, "{\"x\":%.2f,\"y\":%.2f,\"w\":%.2f,\"h\":%.2f,\"numAttr\":%d,\"units\":\"%s\"}", r->x, r->y, r->width, r->height, getLength(r->otherAttributes), r->units);
+    
+    return stringBuf;
+}
+
+char* pathToJSON(const Path *p){
+
+    char* stringBuf = NULL;
+    int bytesNeeded = 0;
+    char* truncateBuf = NULL;
+    if(p == NULL || p->data == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;
+    }
+
+    
+    truncateBuf = malloc(sizeof(char )* 66);
+    strncpy(truncateBuf, p->data, 64);
+
+    bytesNeeded = snprintf(NULL, 0, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes)) + 1;
+    stringBuf = malloc(bytesNeeded) + 1;
+    sprintf(stringBuf, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes));
+
+    free(truncateBuf);
+    
+    return stringBuf;
+}
+
+char* groupToJSON(const Group *g) {
+
+    char* stringBuf = NULL;
+    int bytesNeeded = 0;
+    int numberOfChildren = 0;
+    if(g == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;        
+    } 
+    numberOfChildren = getLength(g->rectangles) + getLength(g->circles) + getLength(g->paths) + getLength(g->groups);
+
+    bytesNeeded = snprintf(NULL, 0, "{\"children\":%d,\"numAttr\":%d}", numberOfChildren, getLength(g->otherAttributes)) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
+    sprintf(stringBuf, "{\"children\":%d,\"numAttr\":%d}", numberOfChildren, getLength(g->otherAttributes));
+
+    return stringBuf;
+    
+
+
+}
+
 char* attrListToJSON(const List *list){return NULL;}
+
 char* circListToJSON(const List *list){return NULL;}
 char* rectListToJSON(const List *list){return NULL;}
 char* pathListToJSON(const List *list){return NULL;}
 char* groupListToJSON(const List *list){return NULL;}
-char* SVGtoJSON(const SVGimage* imge){return NULL;}
+char* SVGtoJSON(const SVGimage* imge){
+
+    char* stringBuf = NULL;
+    int bytesNeeded = 0;
+    int rectNum = 0;
+    int circleNum = 0;
+    int pathNum = 0;
+    int groupNum = 0;
+    if (imge == NULL) {
+        stringBuf = malloc(sizeof(char) * 4);
+        sprintf(stringBuf, "{}");
+        return stringBuf;            
+    }
+    List* rectList = initializeList(&rectangleToString, &deleteStub, &compareRectangles);
+    List* circleList = initializeList(&circleToString, &deleteStub, &compareCircles);
+    List* pathList = initializeList(&pathToString, &deleteStub, &comparePaths);
+    List* groupList = initializeList(&groupToString, &deleteStub, &compareGroups);
+
+    rectList = getRects((SVGimage*) imge);
+    circleList = getCircles((SVGimage*) imge);
+    pathList = getPaths((SVGimage*) imge);
+    groupList = getGroups((SVGimage*) imge);
+
+    rectNum = getLength(rectList);
+    circleNum = getLength(circleList);
+    pathNum = getLength(pathList);
+    groupNum = getLength(groupList);
+    
+    freeList(rectList);
+    freeList(circleList);
+    freeList(pathList);
+    freeList(groupList);
+
+    bytesNeeded = snprintf(NULL, 0, "{\"numRect\":%d,\"numCirc\":%d,\"numPaths\":%d,\"numGroups\":%d}", rectNum, circleNum, pathNum, groupNum) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
+    sprintf(stringBuf, "{\"numRect\":%d,\"numCirc\":%d,\"numPaths\":%d,\"numGroups\":%d}", rectNum, circleNum, pathNum, groupNum);
+
+    return stringBuf;
+}
