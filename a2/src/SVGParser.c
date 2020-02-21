@@ -376,7 +376,8 @@ void parseSVGotherAttributes(xmlNode* root_node, SVGimage* current_img) {
 * Example code can be found at https://www.xmlsoft.org/examples/tree1.c
 */
 
-void parseAttributes(xmlNode* xml_node, SVGimage* current_img) {    
+void parseAttributes(xmlNode* xml_node, SVGimage* current_img) {
+
 
     if(!(strcasecmp((char*)xml_node->name,"RECT"))) {
         Rectangle* tmpRect = rectangleParser(xml_node);
@@ -408,48 +409,42 @@ Rectangle* rectangleParser(xmlNode* xml_node) {
     Rectangle* cur_rect;
 
     cur_rect = malloc(sizeof(Rectangle));
-    cur_rect->width = -1;
-    cur_rect->height = -1;
+    cur_rect->x = 0;
+    cur_rect->y = 0;
+    cur_rect->width = 0;
+    cur_rect->height = 0;
     cur_rect->units[0] = '\0';
     cur_rect->otherAttributes = initializeList(&attributeToString,&deleteAttribute,&compareAttributes);
     char *units = NULL;
-    //char *unitsBuffer = malloc(sizeof(char) * 5);
-    //unitsBuffer[0] = '\0';
 
-        for (attr = cur_node->properties; attr != NULL; attr = attr->next) {
-            xmlNode *value = attr->children;
-            char *attrName = (char *)attr->name;
-            char *cont = (char *)(value->content);
-            
-            if(!(strcasecmp(attrName,"X"))) {
-                cur_rect->x = strtof(cont, NULL);
-            }else if(!(strcasecmp(attrName,"Y"))) {
-                cur_rect->y = strtof(cont, NULL);
-            }else if(!(strcasecmp(attrName,"width"))) {
-                cur_rect->width = strtof(cont,&units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_rect->units,units);
-                }
-            }else if(!(strcasecmp(attrName,"height"))) {
-                cur_rect->height = strtof(cont,&units);
-                if (isalpha(units[0]) != 0) {
-                    strcpy(cur_rect->units,units);
-                }
-            }else {
-                Attribute* cur_attr = malloc(sizeof (Attribute));
-                cur_attr->name = malloc(strlen(attrName) + 1);
-                strcpy(cur_attr->name,attrName);
-                cur_attr->value = malloc(strlen(cont) + 1);
-                strcpy(cur_attr->value,cont);
-                insertBack(cur_rect->otherAttributes,cur_attr);
+    for (attr = cur_node->properties; attr != NULL; attr = attr->next) {
+        xmlNode *value = attr->children;
+        char *attrName = (char *)attr->name;
+        char *cont = (char *)(value->content);
+        
+        if(!(strcasecmp(attrName,"X"))) {
+            cur_rect->x = strtof(cont, NULL);
+        }else if(!(strcasecmp(attrName,"Y"))) {
+            cur_rect->y = strtof(cont, NULL);
+        }else if(!(strcasecmp(attrName,"width"))) {
+            cur_rect->width = strtof(cont,&units);
+            if (isalpha(units[0]) != 0) {
+                strcpy(cur_rect->units,units);
             }
+        }else if(!(strcasecmp(attrName,"height"))) {
+            cur_rect->height = strtof(cont,&units);
+            if (isalpha(units[0]) != 0) {
+                strcpy(cur_rect->units,units);
+            }
+        }else {
+            Attribute* cur_attr = malloc(sizeof (Attribute));
+            cur_attr->name = malloc(strlen(attrName) + 1);
+            strcpy(cur_attr->name,attrName);
+            cur_attr->value = malloc(strlen(cont) + 1);
+            strcpy(cur_attr->value,cont);
+            insertBack(cur_rect->otherAttributes,cur_attr);
         }
-        if(cur_rect->height < 0) {
-            cur_rect->height = 0;
-        }
-        if(cur_rect->width < 0) {
-            cur_rect->width = 0;
-        }
+    }
     //free(unitsBuffer);
     return cur_rect;
 }
@@ -464,7 +459,9 @@ Circle* circleParser(xmlNode* xml_node) {
     char* units = NULL;
 
     cur_circle = malloc(sizeof(Circle));
-    cur_circle->r = -1;
+    cur_circle->cx = 0;
+    cur_circle->cy = 0;
+    cur_circle->r = 0;
     cur_circle->units[0] = '\0';
     cur_circle->otherAttributes = initializeList(&attributeToString,&deleteAttribute,&compareAttributes);
     
@@ -491,10 +488,6 @@ Circle* circleParser(xmlNode* xml_node) {
                 insertBack(cur_circle->otherAttributes,cur_attr);
             }
         }
-        if(cur_circle->r < 0) {
-            cur_circle->r = 0;
-        }
-    
     //freeList(cur_circle->otherAttributes);
     return cur_circle;
 }
@@ -1642,6 +1635,7 @@ void setRectAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
     if (elemIndex >= getLength(image->rectangles) || getLength(image->rectangles) < 0 || elemIndex < 0) {
         return;
     }
+
     ListIterator rectIter = createIterator(image->rectangles);
     void* elem = NULL;
     int counter = 0;
@@ -1651,17 +1645,25 @@ void setRectAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
             Rectangle* tmpRect = (Rectangle*)elem;
             if(strcasecmp(newAttribute->name, "x") == 0) {
                 tmpRect->x = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
-            } else if(strcasecmp(newAttribute->name, "y") == 0) {
+            }
+            else if(strcasecmp(newAttribute->name, "y") == 0) {
                 tmpRect->y = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
-            } else if(strcasecmp(newAttribute->name, "width") == 0) {
+            }
+            else if(strcasecmp(newAttribute->name, "width") == 0) {
                 tmpRect->width = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
-            } else if(strcasecmp(newAttribute->name, "height") == 0) {
+            }
+            else if(strcasecmp(newAttribute->name, "height") == 0) {
                 tmpRect->height = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
-            } else {
+            }
+            else {
                 setOtherAttr(tmpRect->otherAttributes, newAttribute);
                 return;
             }
@@ -1684,12 +1686,15 @@ void setCircleAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
             Circle* tmpCircle = (Circle*)elem;
             if(strcasecmp(newAttribute->name, "cx") == 0) {
                 tmpCircle->cx = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
             } else if(strcasecmp(newAttribute->name, "cy") == 0) {
                 tmpCircle->cy = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
             } else if(strcasecmp(newAttribute->name, "r") == 0) {
                 tmpCircle->r = strtof(newAttribute->value, NULL);
+                deleteAttribute(newAttribute);
                 return;
             } else {
                 setOtherAttr(tmpCircle->otherAttributes, newAttribute);
@@ -1717,12 +1722,14 @@ void setPathAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
                 int bytesNeeded = snprintf(NULL,0,"%s", newAttribute->value) + 1;
                 tmpPath->data = realloc(tmpPath->data, bytesNeeded + 1);
                 sprintf(tmpPath->data, "%s", newAttribute->value);
+                deleteAttribute(newAttribute);
                 return;
             } else {
                 setOtherAttr(tmpPath->otherAttributes, newAttribute);
                 return;
             }
         }
+        counter++;
     }
 }
 void setGroupAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
@@ -1739,6 +1746,7 @@ void setGroupAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
         if (counter == elemIndex) {
             Group* tmpGroup = (Group*)elem;
             setOtherAttr(tmpGroup->otherAttributes, newAttribute);
+            deleteAttribute(newAttribute);
             return;
         }
         counter++;
@@ -1754,11 +1762,12 @@ void setOtherAttr(List* otherAttributes, Attribute* newAttribute) {
             int bytesNeeded = snprintf(NULL,0,"%s",newAttribute->value) + 1;
             tmpAttr->value = realloc(tmpAttr->value, bytesNeeded + 1);
             sprintf(tmpAttr->value, "%s", newAttribute->value);
+            deleteAttribute(newAttribute);
             return;
         }
+    }
     insertBack(otherAttributes,newAttribute);
     return;
-    }
 }
 // TESTING STUBS
 void addComponent(SVGimage* image, elementType type, void* newElement){
@@ -1783,7 +1792,14 @@ void addComponent(SVGimage* image, elementType type, void* newElement){
         }
     }
 }
-char* attrToJSON(const Attribute *a){return NULL;}
+char* attrToJSON(const Attribute *a){
+
+    if(a == NULL) {
+        return NULL;
+    }
+    char* stringBuf = NULL;
+    int bytesNeeded = NULL;
+    }
 char* circleToJSON(const Circle *c){return NULL;}
 char* rectToJSON(const Rectangle *r){return NULL;}
 char* pathToJSON(const Path *p){return NULL;}

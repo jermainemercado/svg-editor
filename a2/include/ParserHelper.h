@@ -29,6 +29,7 @@ void getPathsHelper(Group* group, List* pathList);
 void getCirclesHelper(Group* group, List* circleList);
 void getRectsHelper(Group* group, List* rectList);
 //ASSIGNMENT 2
+//MODULE 1
 xmlDocPtr convertSVGimage(SVGimage* image);
 void imgOtherToXml(List* imageAttributes, xmlNodePtr root_node);
 void imgRectToXml(List* imageRectangles, xmlNodePtr root_node);
@@ -41,5 +42,11 @@ bool validateRect(Rectangle* imgRect);
 bool validateCircle(Circle* imgCircle);
 bool validatePath(Path* imgPath);
 bool validateGroup(Group* imgGroup);
+//MODULE 2
+void setOtherAttr(List* otherAttributes, Attribute* newAttribute);
+void setRectAttr(SVGimage* image, Attribute* newAttribute, int elemIndex);
+void setCircleAttr(SVGimage* image, Attribute* newAttribute, int elemIndex);
+void setPathAttr(SVGimage* image, Attribute* newAttribute, int elemIndex);
+void setGroupAttr(SVGimage* image, Attribute* newAttribute, int elemIndex);
 
 #endif
