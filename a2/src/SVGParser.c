@@ -1732,6 +1732,7 @@ void setPathAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
         counter++;
     }
 }
+
 void setGroupAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
 
     if (elemIndex >= getLength(image->paths) || getLength(image->paths) < 0 || elemIndex < 0) {
@@ -1753,6 +1754,7 @@ void setGroupAttr(SVGimage* image, Attribute* newAttribute, int elemIndex) {
     }
 
 }
+
 void setOtherAttr(List* otherAttributes, Attribute* newAttribute) {
     ListIterator otherIter = createIterator(otherAttributes);
     void* otherElem = NULL;
@@ -1769,7 +1771,8 @@ void setOtherAttr(List* otherAttributes, Attribute* newAttribute) {
     insertBack(otherAttributes,newAttribute);
     return;
 }
-// TESTING STUBS
+
+
 void addComponent(SVGimage* image, elementType type, void* newElement){
     if (image == NULL || newElement == NULL) {
         return;
@@ -1792,11 +1795,13 @@ void addComponent(SVGimage* image, elementType type, void* newElement){
         }
     }
 }
+//MODULE 3 FUNCTIONS
+
 char* attrToJSON(const Attribute *a){
 
     char* stringBuf = NULL;
     int bytesNeeded = 0;
-    if(a == NULL || a->name == NULL || a->value == NULL) {
+    if(a == NULL || a->name == NULL || a->value == NULL || a->name[0] == '\0' || a->value[0] == '\0') {
         stringBuf = malloc(sizeof(char) * 4);
         sprintf(stringBuf, "{}");
         return stringBuf;
@@ -1848,24 +1853,25 @@ char* rectToJSON(const Rectangle *r){
 
 char* pathToJSON(const Path *p){
 
-    char* stringBuf = NULL;
+    char* stringBuf;
     int bytesNeeded = 0;
-    char* truncateBuf = NULL;
-    if(p == NULL || p->data == NULL) {
+    char* truncateBuf;
+
+    if(p == NULL || p->data == NULL || p->data[0] == '\0') {
         stringBuf = malloc(sizeof(char) * 4);
         sprintf(stringBuf, "{}");
         return stringBuf;
     }
-
     
-    truncateBuf = malloc(sizeof(char )* 66);
-    strncpy(truncateBuf, p->data, 64);
-
+    truncateBuf = malloc(66);
+    truncateBuf = strncpy(truncateBuf, p->data, 64);
     bytesNeeded = snprintf(NULL, 0, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes)) + 1;
-    stringBuf = malloc(bytesNeeded) + 1;
+    stringBuf = malloc(bytesNeeded + 1);
     sprintf(stringBuf, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes));
 
-    free(truncateBuf);
+    if(truncateBuf != NULL) {
+        free(truncateBuf);
+    }
     
     return stringBuf;
 }
@@ -1892,12 +1898,210 @@ char* groupToJSON(const Group *g) {
 
 }
 
-char* attrListToJSON(const List *list){return NULL;}
+char* attrListToJSON(const List *list){
+    
+    int bytesNeeded = 0;
+    char* stringBuf = NULL;
+    char* backupBuffer = NULL;
+    void* elem = NULL;
+    int counter = 0;
 
-char* circListToJSON(const List *list){return NULL;}
-char* rectListToJSON(const List *list){return NULL;}
-char* pathListToJSON(const List *list){return NULL;}
-char* groupListToJSON(const List *list){return NULL;}
+    if ((List*)list == NULL || getFromFront((List*)list) == NULL) {
+        stringBuf = malloc(4);
+        sprintf(stringBuf, "[]");
+        return stringBuf;
+    }
+
+    ListIterator attrIter = createIterator((List*)list);
+    stringBuf = malloc(2);
+    sprintf(stringBuf, "[");
+
+    while((elem = nextElement(&attrIter)) != NULL) {
+        Attribute* tmpAttr = (Attribute*)elem;
+        if (counter == (getLength((List*)list) - 1)) {
+            backupBuffer = attrToJSON(tmpAttr);
+            bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, "]");
+            free(backupBuffer);
+        } else {
+            backupBuffer = attrToJSON(tmpAttr);
+            bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, ",");
+            free(backupBuffer);
+        }
+        counter++;
+    }
+    return stringBuf;
+
+}
+
+char* circListToJSON(const List *list){
+
+    int bytesNeeded = 0;
+    char* stringBuf = NULL;
+    char* backupBuffer = NULL;
+    void* elem = NULL;
+    int counter = 0;
+
+    if ((List*)list == NULL || getFromFront((List*)list) == NULL) {
+        stringBuf = malloc(4);
+        sprintf(stringBuf, "[]");
+        return stringBuf;
+    }
+
+    ListIterator circleIter = createIterator((List*)list);
+    stringBuf = malloc(2);
+    sprintf(stringBuf, "[");
+    
+    while((elem = nextElement(&circleIter)) != NULL) {
+        Circle* tmpCircle = (Circle*)elem;
+        if (counter == (getLength((List*)list) - 1)) {
+            backupBuffer = circleToJSON(tmpCircle);
+            bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, "]");
+            free(backupBuffer);
+        } else {
+            backupBuffer = circleToJSON(tmpCircle);
+            bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, ",");
+            free(backupBuffer);
+        }
+        counter++;
+    }
+    return stringBuf;
+}
+
+char* rectListToJSON(const List *list){
+
+    int bytesNeeded = 0;
+    char* stringBuf = NULL;
+    char* backupBuffer = NULL;
+    void* elem = NULL;
+    int counter = 0;
+
+    if ((List*)list == NULL || getFromFront((List*)list) == NULL) {
+        stringBuf = malloc(4);
+        sprintf(stringBuf, "[]");
+        return stringBuf;
+    }
+
+    ListIterator rectIter = createIterator((List*)list);
+    stringBuf = malloc(2);
+    sprintf(stringBuf, "[");
+    
+    while((elem = nextElement(&rectIter)) != NULL) {
+        Rectangle* tmpRect = (Rectangle*)elem;
+        if (counter == (getLength((List*)list) - 1)) {
+            backupBuffer = rectToJSON(tmpRect);
+            bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, "]");
+            free(backupBuffer);
+        } else {
+            backupBuffer = rectToJSON(tmpRect);
+            bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, ",");
+            free(backupBuffer);
+        }
+        counter++;
+    }
+    return stringBuf;
+}
+
+char* pathListToJSON(const List *list){
+
+    int bytesNeeded = 0;
+    char* stringBuf = NULL;
+    char* backupBuffer = NULL;
+    void* elem = NULL;
+    int counter = 0;
+
+    if ((List*)list == NULL || getFromFront((List*)list) == NULL) {
+        stringBuf = malloc(4);
+        sprintf(stringBuf, "[]");
+        return stringBuf;
+    }
+
+    ListIterator pathIter = createIterator((List*)list);
+    stringBuf = malloc(2);
+    sprintf(stringBuf, "[");
+    
+    while((elem = nextElement(&pathIter)) != NULL) {
+        Path* tmpPath = (Path*)elem;
+        if (counter == (getLength((List*)list) - 1)) {
+            backupBuffer = pathToJSON(tmpPath);
+            bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, "]");
+            free(backupBuffer);
+        } else {
+            backupBuffer = pathToJSON(tmpPath);
+            bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, ",");
+            free(backupBuffer);
+        }
+        counter++;
+    }
+    return stringBuf;
+}
+
+char* groupListToJSON(const List *list){
+
+
+    int bytesNeeded = 0;
+    char* stringBuf = NULL;
+    char* backupBuffer = NULL;
+    void* elem = NULL;
+    int counter = 0;
+
+    if ((List*)list == NULL || getFromFront((List*)list) == NULL) {
+        stringBuf = malloc(4);
+        sprintf(stringBuf, "[]");
+        return stringBuf;
+    }
+
+    ListIterator groupIter = createIterator((List*)list);
+    stringBuf = malloc(2);
+    sprintf(stringBuf, "[");
+    
+    while((elem = nextElement(&groupIter)) != NULL) {
+        Group* tmpGroup = (Group*)elem;
+        if (counter == (getLength((List*)list) - 1)) {
+            backupBuffer = groupToJSON(tmpGroup);
+            bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, "]");
+            free(backupBuffer);
+        } else {
+            backupBuffer = groupToJSON(tmpGroup);
+            bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
+            stringBuf = realloc(stringBuf, bytesNeeded + 1);
+            strcat(stringBuf, backupBuffer);
+            strcat(stringBuf, ",");
+            free(backupBuffer);
+        }
+        counter++;
+    }
+    return stringBuf;
+
+}
+
+
 char* SVGtoJSON(const SVGimage* imge){
 
     char* stringBuf = NULL;
@@ -1906,15 +2110,16 @@ char* SVGtoJSON(const SVGimage* imge){
     int circleNum = 0;
     int pathNum = 0;
     int groupNum = 0;
+    List* rectList;
+    List* circleList;
+    List* pathList;
+    List* groupList;
     if (imge == NULL) {
         stringBuf = malloc(sizeof(char) * 4);
         sprintf(stringBuf, "{}");
         return stringBuf;            
     }
-    List* rectList = initializeList(&rectangleToString, &deleteStub, &compareRectangles);
-    List* circleList = initializeList(&circleToString, &deleteStub, &compareCircles);
-    List* pathList = initializeList(&pathToString, &deleteStub, &comparePaths);
-    List* groupList = initializeList(&groupToString, &deleteStub, &compareGroups);
+
 
     rectList = getRects((SVGimage*) imge);
     circleList = getCircles((SVGimage*) imge);
