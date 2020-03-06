@@ -1200,10 +1200,9 @@ SVGimage* createValidSVGimage(char* fileName, char* schemaFile) {
         return NULL;
     }
     SVGimage* image = createSVGimage(fileName);
-    if(validateSVGimage(image,schemaFile) == false) {
+    if(validateSVGimage(image,schemaFile) != true) {
         return NULL;
     }
-
     xmlCleanupParser();
     return image;
 }
@@ -1483,6 +1482,11 @@ void imgGroupToXml(List* imageGroups, xmlNodePtr root_node) {
 
 bool validateHelper(SVGimage* image) {
 
+
+	if (validateAttrs(image->otherAttributes) == false || image->rectangles == NULL || image->paths == NULL || image->groups == NULL || image->circles == NULL) {
+		return false;
+	}
+
 	void* elem = NULL;
     List* rectList = getRects(image);
     List* circleList = getCircles(image);
@@ -1493,10 +1497,6 @@ bool validateHelper(SVGimage* image) {
 	ListIterator circleIter = createIterator(circleList);
 	ListIterator pathIter = createIterator(pathList);
 	ListIterator groupIter = createIterator(groupList);
-
-	if (validateAttrs(image->otherAttributes) == false) {
-		return false;
-	}
 	while((elem = nextElement(&rectIter)) != NULL) {
 		Rectangle* tmpRect = (Rectangle*)elem;
 		if (validateRect(tmpRect) == false) {
@@ -1826,9 +1826,9 @@ char* circleToJSON(const Circle *c){
     }
 
 
-    bytesNeeded = snprintf(NULL, 0, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units) + 1;
+    bytesNeeded = snprintf(NULL, 0, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"}", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units) + 1;
     stringBuf = malloc(bytesNeeded + 1);
-    sprintf(stringBuf, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units);
+    sprintf(stringBuf, "{\"cx\":%.2f,\"cy\":%.2f,\"r\":%.2f,\"numAttr\":%d,\"units\":\"%s\"}", c->cx, c->cy, c->r, getLength(c->otherAttributes), c->units);
 
     return stringBuf;
 }
@@ -1855,19 +1855,22 @@ char* pathToJSON(const Path *p){
 
     char* stringBuf;
     int bytesNeeded = 0;
-    char* truncateBuf;
+    char* truncateBuf = malloc(sizeof(char) * 65);
 
     if(p == NULL || p->data == NULL || p->data[0] == '\0') {
         stringBuf = malloc(sizeof(char) * 4);
         sprintf(stringBuf, "{}");
+        free(truncateBuf);
         return stringBuf;
     }
     
-    truncateBuf = malloc(66);
-    truncateBuf = strncpy(truncateBuf, p->data, 64);
-    bytesNeeded = snprintf(NULL, 0, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes)) + 1;
-    stringBuf = malloc(bytesNeeded + 1);
-    sprintf(stringBuf, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes));
+    truncateBuf = strncpy(truncateBuf, p->data, 65);
+    if (truncateBuf != NULL) {
+        bytesNeeded = snprintf(NULL, 0, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes)) + 1;
+        stringBuf = malloc(bytesNeeded + 1);
+        sprintf(stringBuf, "{\"d\":\"%s\",\"numAttr\":%d}", truncateBuf, getLength(p->otherAttributes));
+    }
+
 
     if(truncateBuf != NULL) {
         free(truncateBuf);
@@ -2039,15 +2042,14 @@ char* pathListToJSON(const List *list){
     
     while((elem = nextElement(&pathIter)) != NULL) {
         Path* tmpPath = (Path*)elem;
+        backupBuffer = pathToJSON(tmpPath);
         if (counter == (getLength((List*)list) - 1)) {
-            backupBuffer = pathToJSON(tmpPath);
             bytesNeeded = snprintf(NULL, 0, "%s%s", stringBuf, backupBuffer) + 1;
             stringBuf = realloc(stringBuf, bytesNeeded + 1);
             strcat(stringBuf, backupBuffer);
             strcat(stringBuf, "]");
             free(backupBuffer);
         } else {
-            backupBuffer = pathToJSON(tmpPath);
             bytesNeeded = snprintf(NULL, 0, "%s,%s", stringBuf, backupBuffer) + 1;
             stringBuf = realloc(stringBuf, bytesNeeded + 1);
             strcat(stringBuf, backupBuffer);
