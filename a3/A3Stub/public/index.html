@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SVG Image Viewer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="SVG Image Viewer Front-End Implemented For CIS2750 W19.">
+    <meta name="keywords" content="SVG Image Viewer">
+    <meta name="author" content="Jermaine Mercado">
+    <!-- Load jquery, bootstrap -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <!-- Custom CSS End -->
+</head>
+<body>
+    <h1>SVG Image Viewer</h1>
+    <div id="filePanel">
+        <h3>File Log Panel</h3>
+        <table class="filelog" cellpadding="4" cellspacing="5">
+            <thead>
+            <tr>
+                <th>Image<br>(click to download)</th>
+                <th>Filename<br>(click to download)</th>
+                <th>Filesize</th>
+                <th># of Rectangles</th>
+                <th># of Circles</th>
+                <th># of Paths</th>
+                <th># of Groups</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th width="100%">
+                        NA
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="svgDropdown">
+        <h5>Select SVG Image on Server to View</h5>
+        <button type="button" id="svgDropdown" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Choose File...
+          </button>
+        <div class="dropdown-menu">
+          </div>
+    </div>
+    <div>
+        <h3>SVG View Panel</h1>
+        <table id="viewPanel">
+            <thead>
+                <tr>
+                    <td width="100%">
+                        <img id="svgDisplay" src=rects.svg">
+                    </td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr id="titleDesc">
+                    <th id="title">
+                        Title
+                    </th>
+                    <th id="description">
+                        Description
+                    </th>
+                </tr>
+                <tr id="svgSummary">
+                    <th id="component">
+                        Component
+                    </th>
+                    <th id="summary">
+                        Summary
+                    </th>
+                    <th id="otherAttr">
+                        Other Attributes
+                    </th>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <form ref='someform'
+          id='someform'>
+          <div class="form-group">
+                <label for="entryBox">Last Name</label>
+                <input type="text" class="form-control" id="entryBox" value="Value" placeholder="Placeholder">
+            </div>
+        <div class="form-group">
+            <input type='submit' class="btn btn-secondary">
+        </div>
+    </form>
+    <!-- Leave me at the bottom of body -->
+    <script src="/index.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
