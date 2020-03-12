@@ -3,7 +3,12 @@
 // C library API
 const ffi = require('ffi-napi');
 let svgLib = ffi.Library('./parser/libsvgparse', {
-  "imageToJSON" : [ "string" , ["string"] ]
+  "imageToJSON" : [ "string" , ["string"] ],
+  "titleDescToJSON" : [ "string" , ["string"] ],
+  "circListToJSON" : [ "string" , ["string"] ],
+  "rectListToJSON" : [ "string" , ["string"] ],
+  "pathListToJSON" : [ "string" , [ "string" ] ], 
+  "groupListToJSON" : [ "string" , [ "string" ] ]
 });
 
 // Express App (Routes)
@@ -74,21 +79,6 @@ app.get('/uploads/:name', function(req , res){
 
 //******************** Your code goes here ******************** 
 
-//Sample endpoint
-/*app.get('/someendpoint', function(req , res){
-  let retStr = req.query.name1 + " " + req.query.name2;
-  res.send({
-    foo: retStr
-  });
-});
-app.get('/uploads:name', function(err, image) {
-  let svgImages = [];
-  for (let i = 0; i < image.length; i++) {
-    let file = '/uploads/' + items[i];
-    console.log(file);
-  }
-})*/
-//Sample endpoint
 app.get('/getSVGFiles', function(req , res){
   let arrayFiles = uploadFiles();
   let svgFiles = [];
@@ -98,6 +88,40 @@ app.get('/getSVGFiles', function(req , res){
     svgFiles.push(svgFile);
   }
   res.send(svgFiles);
+});
+
+app.get('/parseTitleDesc', function(req, res){
+  let file = req.query.sendFile;
+  let jsonObject = JSON.parse(svgLib.titleDescToJSON("./uploads/" + file));
+  
+  res.send(jsonObject);
+});
+
+app.get('/getComponents', function(req, res) {
+  let file = req.query.sendFile;
+  let rectangles = JSON.parse(svgLib.rectListToJSON("./uploads/" + file));
+  let circles = JSON.parse(svgLib.circListToJSON("./uploads/" + file));
+  let paths = JSON.parse(svgLib.pathListToJSON("./uploads/" + file));
+  let groups = JSON.parse(svgLib.groupListToJSON("./uploads/" + file));
+
+  for (let i = 0; i < rectangles.length ; i++) {
+      console.log(rectangles[i]);
+  }
+  for (let i = 0; i < circles.length ; i++) {
+      console.log(circles[i]);
+  }
+  for (let i = 0; i < paths.length ; i++) {
+      console.log(paths[i]);
+  }
+  for (let i = 0; i < groups.length ; i++) {
+      console.log(groups[i]);
+  }
+  res.send({
+    rectangles: rectangles,
+    circles: circles,
+    paths: paths,
+    groups: groups,
+  });
 });
 
 app.listen(portNum);

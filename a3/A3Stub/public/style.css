@@ -56,9 +56,12 @@ input[type=submit], button {
 
 /*.svgView{}*/
 
-#imageView {
+img {
     height: auto;
     width: 200px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 #filePanel {
     overflow: auto;

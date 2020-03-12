@@ -41,6 +41,15 @@
             </tbody>
         </table>
     </div>
+
+    <div>
+        <h3>Upload Files Here</h3>
+        <form ref='uploadForm' id='uploadForm' action='/upload' method='post' encType="multipart/form-data">
+            <input type="file" name="uploadFile" id="myFile" accept=".svg" required></input>
+            <input type="submit"></input>
+        </form>  
+    </div>
+
     <div id="svgDropdown">
         <h5>Select SVG Image on Server to View</h5>
         <button type="button" id="svgDropdown" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -49,25 +58,28 @@
         <div class="dropdown-menu">
           </div>
     </div>
+    
     <div>
-        <h3>SVG View Panel</h1>
-        <table id="viewPanel">
-            <thead>
+        <h3>SVG View Panel</h3>
+        <table id="viewPanel" class="svgPanel">
+            <tbody>
                 <tr>
-                    <td width="100%">
+                    <td colspan="3">
                         <img id="svgDisplay" src=rects.svg">
                     </td>
                 </tr>
-            </thead>
-            <tbody>
-                <tr id="titleDesc">
-                    <th id="title">
+            </tbody>
+            <tbody id="titleDesc">
+                <tr>
+                    <th id="title" colspan="1">
                         Title
                     </th>
-                    <th id="description">
+                    <th id="description" colspan="3">
                         Description
                     </th>
                 </tr>
+            </tbody>
+            <tbody id="components">
                 <tr id="svgSummary">
                     <th id="component">
                         Component
@@ -82,16 +94,8 @@
             </tbody>
         </table>
     </div>
-    <form ref='someform'
-          id='someform'>
-          <div class="form-group">
-                <label for="entryBox">Last Name</label>
-                <input type="text" class="form-control" id="entryBox" value="Value" placeholder="Placeholder">
-            </div>
-        <div class="form-group">
-            <input type='submit' class="btn btn-secondary">
-        </div>
-    </form>
+
+
     <!-- Leave me at the bottom of body -->
     <script src="/index.js"></script>
 </body>
